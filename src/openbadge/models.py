@@ -76,15 +76,6 @@ def fix_email(cls):
 
     return cls
 
-
-class OverwriteStorage(FileSystemStorage):
-    def get_available_name(self, name):
-        # If the filename already exists, remove it as if it was a true file system
-        if self.exists(name):
-            os.remove(os.path.join(settings.MEDIA_ROOT, name))
-        return name
-
-
 ##########################################################################################
 
 
@@ -92,22 +83,12 @@ class OverwriteStorage(FileSystemStorage):
 class OpenBadgeUser(auth_models.AbstractUser, BaseModel):
     pass
 
-
-def _to_timestamp(dt):
-    return (dt - datetime.datetime(1970, 1, 1).replace(tzinfo=pytz.UTC)).total_seconds()
-
-
-def upload_to(self, filename):
-    return "/".join(('logs', str(self.project.key), self.uuid + os.path.splitext(filename)[1]))
-
-
 class Project(BaseModel):
     """
     Definition of the Project, which is an `organization`-level collection of hubs, badges, and meetings
     """
 
     name = models.CharField(max_length=64)
-    """Human readable identifier for this project (Apple, Google, etc.)"""
 
     def __unicode__(self):
         return self.name
@@ -115,14 +96,16 @@ class Project(BaseModel):
     def get_meetings(self, file):
         return {'meetings': {meeting.uuid: meeting.to_object(file) for meeting in self.meetings.all()}}
 
-    def to_object(self):
-        """for use in HTTP responses, gets the id, name, members, and a map form badge_ids to member names"""
+    def to_object(self, hub_uuid):
+        """
+        this should be things that are relatively constant, and won't need to be updated mid-meeting
+        """
 
         return {'project_id': self.id,
                 'key': self.key,
                 'name': self.name,
                 'badge_map': {member.badge: {"name": member.name, "key": member.key} for member in self.members.all()},
-                'members': {member.name: member.to_dict() for member in self.members.all()}
+                'members': {member.name: member.to_object() for member in self.members.all()}
                 }
 
 
@@ -130,27 +113,29 @@ class Hub(BaseModel):
     """Definition of a Hub, which is owned by a Project and has am externally generated uuid"""
 
     name = models.CharField(max_length=64)
-    """Human readable identifier for this Hub (South Conference Room)"""
 
     project = models.ForeignKey(Project, null=True, related_name="hubs")
 
     god = models.BooleanField(default=False)
 
-    uuid = models.CharField(max_length=64, db_index=True, unique=True)
+    key = models.CharField(max_length=64, db_index=True, unique=True)
     """ng-device generated uuid"""
 
-    def get_object(self):
-        return {"name": self.name, "meetings": self.get_completed_meetings(), "is_god": self.god}
+    def get_object(self, active_meeting = None):
+        """
+        These are all the things that change as the meeting progresses. Mainly the last_update for the hub.
+        """
+        if active_meeting:
+            return {"name": self.name,
+                    "last_update": active_meeting.last_log_index_for_hub(self),
+                    "is_god": self.god}
 
-    def get_completed_meetings(self):
-
-        return {meeting.uuid: {"last_log_timestamp": meeting.last_update_timestamp,
-                               "last_log_serial": meeting.last_update_index,
-                               "is_complete": meeting.is_complete}
-                for meeting in self.meetings.all()}
+        return {"name": self.name,
+                "last_updates": {meeting.uuid: meeting.last_log_index_for_hub(self)
+                                    for meeting in self.meetings.all()},
+                "is_god": self.god}
 
     def __unicode__(self):
-        """This method is called in the drop-down for choosing the hub a project is associated with"""
         return self.name
 
 
@@ -158,17 +143,14 @@ class Member(BaseModel):
     """Definition of a Member, who belongs to a Project, and owns a badge"""
 
     name = models.CharField(max_length=64)
-    email = models.EmailField(unique=True)
+    email = models.EmailField(unique=False, blank=True)
     badge = models.CharField(max_length=64)
     """Some sort of hub-readable ID for the badge, similar to a MAC, but accessible from iPhone"""
 
     project = models.ForeignKey(Project, related_name="members")
 
-    def to_dict(self):
-        return dict(id=self.id,
-                    name=self.name,
-                    badge=self.badge
-                    )
+    def to_object(self):
+        return {'id':self.id, 'name':self.name, 'badge':self.badge}
 
     def __unicode__(self):
         return self.name
@@ -181,76 +163,133 @@ class Meeting(BaseModel):
     """
 
     version = models.DecimalField(decimal_places=2, max_digits=5)
+    """The logging version this project uses"""
 
     uuid = models.CharField(max_length=64, db_index=True, unique=True)
-    """this will be something the phone can generate and give us, like [hub_uuid]-[start_time]"""
+    """something like [project_name]|[random]|[start_time]"""
 
-    start_time = models.DecimalField(decimal_places=3, max_digits= 20, null=True)
-    """time they hit start"""
-
-    end_time = models.DecimalField(decimal_places=3, max_digits= 20, null=True)
-    """time that they either hit end, or that the meeting timesout."""
-
-    last_update_timestamp = models.DecimalField(decimal_places=3, max_digits= 20, null=True)
-    """log_timestamp of the last chunk received"""
-
-    last_update_index = models.IntegerField(null=True, blank=True)
-    """Serial Number of last log chunk received. Better be continuous!!"""
-
-    ending_method = models.CharField(max_length=16, blank=True, null=True)
-    """what caused the meeting to end? timeout|manual"""
-
-    is_complete = models.BooleanField(default=False, blank=True)
-    """whether we've gotten a signal that the meeting is complete (end_time != null?)"""
-
-    log_file = models.FileField(upload_to=upload_to, storage=OverwriteStorage(), blank=True)
-    """Local reference to log file"""
+    metadata = models.OneToOneField(Event)
+    """event data that will be continually updated with information about this meeting"""
 
     project = models.ForeignKey(Project, related_name="meetings")
     """The Project this Meeting belongs to"""
 
-    hub = models.ForeignKey(Hub, related_name="meetings")
-    """Used when checking if there are meetings we don't have"""
-
     def __unicode__(self):
         return unicode(self.project.name) + "|" + str(self.start_time)
 
-    def get_chunks(self):
-        """open and read this meeting's log_file"""
+    def get_events(self, hub = None):
+        """get all events, optionally by hub"""
+        if hub:
+            return self.events.filter(hub=hub).latest()
+        else:
+            return self.events.all()
 
-        chunks = []
+    def get_last_log_index_for_hub(self, hub):
+        hubs_events = self.get_events(hub)
 
-        f = self.log_file
-
-        f.readline()  # the first line will be info about the meeting, all subsequent lines are chunks
-
-        for line in f.readlines():
-            try:
-                chunk = simplejson.loads(line)
-                chunks.append(chunk)
-            except Exception:
-                pass
-
-        f.seek(0)
-        return chunks
-
-    def get_meta(self):
-        """open and read the first line of this meeting's log_file"""
-
-        f = self.log_file
-        return simplejson.loads(
-            f.readline())  # the first line will be info about the meeting, all subsequent lines are chunks
-
-    def to_object(self, file):
+    def to_object(self, get_file = False):
         """Get an representation of this object for use with HTTP responses"""
 
-        meta = self.get_meta()
+        if get_file:
+            return {"events": self.get_events(),
+                    "metadata":self.metadata}
 
-        meta['log_index'] = self.last_update_index
-        meta['log_timestamp'] = self.last_update_timestamp
+        return {"metadata": self.metadata}
 
-        if file:
-            return {"chunks": self.get_chunks(),
-                    "metadata":meta}
 
-        return {"metadata": meta}
+class Event(models.Model):
+    """
+    Represents a piece of data uploaded by the phone. Could be anything from meeting starts to accelerometer data
+    """
+
+    type = models.CharField(max_length=64)
+    """What kind of event this is: meeting start, audio recieve, etc"""
+
+    log_timestamp = models.DecimalField(decimal_places=3, max_digits=20)
+    """When the phone saved this log"""
+
+    log_index = models.IntegerField()
+    """Chronological ordering of the logs -- by hub!"""
+
+    hub = models.ForeignKey(Hub, related_name="events")
+    """Which hub recorded this event"""
+
+    uuid = models.CharField(max_length=128, db_index=True)
+    """Concatenation of project uuid, hub uuid, and log_index"""
+
+    data = JSONField()
+    """Whatever other data there is about this event"""
+
+    meeting = models.ForeignKey(Meeting, related_name="events")
+    """What meeting these are all a part of"""
+
+    class Meta:
+        order_by = 'log_timestamp'
+        get_latest_by = 'log_index'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
