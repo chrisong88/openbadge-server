@@ -63,9 +63,28 @@ def meetings(request, project_key):
     return HttpResponseNotFound()
 
 
+# TODO: Make this actually do something
 @api_view(['PUT'])
 def put_meeting(request, project_key):
-    hub = Hub.objects.get(uuid=request.headers.get("HTTP_X_HUB_UUID"))  # type: Hub
+    chunks = simplejson.loads(request.data.get('chunks'))
+    meta = simplejson.loads(chunks[0])
+
+    meeting = Meeting(version=meta[0]['data']['version'],
+                      project=request.hub.project,
+                      uuid=meta[0]['data']['uuid'])
+    meeting.save()
+
+    meeting_meta = Event(uuid=meeting.uuid + "|" + request.hub.uuid + "|" + request.event['log_index'],
+                         type=meta['type'],
+                         log_index=meta['log_index'],
+                         log_timestamp=meta['log_timestamp'],
+                         hub=request.hub,
+                         data=meta['data'],
+                         meeting=meeting)
+    meeting_meta.save()
+
+    meeting.metadata = meeting_meta
+    meeting.save()
 
 
 @api_view(['GET'])
@@ -78,6 +97,7 @@ def get_meeting(request, project_key):
     return JsonResponse(request.hub.project.get_all_meetings(get_file))
 
 
+# TODO: Update the meeting meta as we get `special` events
 @api_view(['POST'])
 def post_meeting(request, project_key):
     meeting = request.meeting  # type: Meeting

@@ -161,9 +161,9 @@ class Meeting(BaseModel):
     """The logging version this project uses"""
 
     uuid = models.CharField(max_length=64, db_index=True, unique=True)
-    """something like [project_name]|[random]|[start_time]"""
+    """something like [project_name]|[start_time], start time in ms, making it infeasible to `hack`"""
 
-    metadata = models.OneToOneField('Event', related_name="none")
+    metadata = models.OneToOneField('Event', related_name="none", null=True)
     """event data that will be continually updated with information about this meeting"""
 
     project = models.ForeignKey(Project, related_name="meetings", on_delete=models.CASCADE)

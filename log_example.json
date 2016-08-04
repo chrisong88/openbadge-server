@@ -21,9 +21,8 @@ This allows us to store every log-line in the database as an object with the sam
   "log_index": 0,
   "hub":"`hub's uuid`",
   "data": {
-    "uuid": "c65c943da5487d51_1469492042319",
-    "start_time": "1469492042.344",
     "log_version": "2.0"
+    "uuid": "[Project Name]|[Start Time]"
   }
 }
 
