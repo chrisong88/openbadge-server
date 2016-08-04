@@ -228,7 +228,6 @@ PIPELINE_CSS = {
 }
 
 APP_KEY = passwords.APP_KEY
-GOD_KEY = passwords.GOD_KEY
 
 EXPIRING_TOKEN_LIFESPAN = datetime.timedelta(hours=24)
 

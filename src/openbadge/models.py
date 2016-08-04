@@ -120,7 +120,7 @@ class Hub(BaseModel):
     su = models.BooleanField(default=False)
     """Is this a Super User? Gets updated mid-meeting."""
 
-    key = models.CharField(max_length=64, db_index=True, unique=True)
+    uuid = models.CharField(max_length=64, db_index=True, unique=True)
     """ng-device generated uuid"""
 
     def to_object(self):
@@ -163,7 +163,7 @@ class Meeting(BaseModel):
     uuid = models.CharField(max_length=64, db_index=True, unique=True)
     """something like [project_name]|[random]|[start_time]"""
 
-    metadata = models.OneToOneField(Event)
+    metadata = models.OneToOneField('Event', related_name="none")
     """event data that will be continually updated with information about this meeting"""
 
     project = models.ForeignKey(Project, related_name="meetings", on_delete=models.CASCADE)
@@ -236,5 +236,5 @@ class Event(models.Model):
         return simplejson.dumps(self.to_object())
 
     class Meta:
-        order_by = 'log_timestamp'
+        ordering = ['log_timestamp']
         get_latest_by = 'log_index'

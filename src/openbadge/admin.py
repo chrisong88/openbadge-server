@@ -64,13 +64,11 @@ class ProjectAdmin(admin.ModelAdmin):
 
     @staticmethod
     def number_of_members(inst):
-        return len(inst.members.all())
+        return inst.members.count()
 
     @staticmethod
     def number_of_meetings(inst):
-        if inst.meetings.all():
-            return len([meeting.uuid for meeting in inst.meetings.all()])
-        return "NONE"
+        return inst.meetings.count()
 
     # number_of_meetings.admin_order_field = 'number_of_meetings' #Allows column order sorting
     # number_of_meetings.short_description = 'Number of Meetings' #Renames column head
@@ -89,11 +87,9 @@ class ProjectAdmin(admin.ModelAdmin):
 @register(Meeting)
 class MeetingAdmin(admin.ModelAdmin):
     readonly_fields = ("key",)
-    list_display = ('uuid', 'project_name', 'hub',
-                    'start', 'end',
-                    'last_update', 'last_update_index',
-                    'duration',
-                    'is_complete')
+    list_display = ('uuid', 'project',
+                    'metadata',
+                    'duration')
     actions_on_top = True
 
     eastern = timezone("US/Eastern")
@@ -114,13 +110,6 @@ class MeetingAdmin(admin.ModelAdmin):
     def end(self, inst):
         if inst.end_time:
             return self.get_local_time(inst.end_time)
-
-
-    def project_name(self, inst):
-        return inst.project.name
-
-    project_name.admin_order_field = 'project_name'
-    project_name.short_description = 'Project'
 
     def duration(self, inst):
         return timedelta(seconds=int(inst.last_update_timestamp - inst.start_time))

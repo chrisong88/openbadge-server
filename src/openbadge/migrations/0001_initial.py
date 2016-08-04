@@ -2,10 +2,11 @@
 from __future__ import unicode_literals
 
 from django.db import models, migrations
+import jsonfield.fields
 import django.contrib.auth.models
+import django.db.models.deletion
 import django.utils.timezone
 import django.core.validators
-import openbadge.models
 
 
 class Migration(migrations.Migration):
@@ -45,6 +46,20 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
+            name='Event',
+            fields=[
+                ('uuid', models.CharField(max_length=128, serialize=False, primary_key=True)),
+                ('type', models.CharField(max_length=64)),
+                ('log_timestamp', models.DecimalField(max_digits=20, decimal_places=3)),
+                ('log_index', models.IntegerField()),
+                ('data', jsonfield.fields.JSONField()),
+            ],
+            options={
+                'ordering': ['log_timestamp'],
+                'get_latest_by': 'log_index',
+            },
+        ),
+        migrations.CreateModel(
             name='Hub',
             fields=[
                 ('id', models.AutoField(serialize=False, primary_key=True)),
@@ -52,6 +67,7 @@ class Migration(migrations.Migration):
                 ('date_created', models.DateTimeField(auto_now_add=True)),
                 ('date_updated', models.DateTimeField(auto_now=True)),
                 ('name', models.CharField(max_length=64)),
+                ('su', models.BooleanField(default=False)),
                 ('uuid', models.CharField(unique=True, max_length=64, db_index=True)),
             ],
             options={
@@ -65,17 +81,9 @@ class Migration(migrations.Migration):
                 ('key', models.CharField(db_index=True, unique=True, max_length=10, blank=True)),
                 ('date_created', models.DateTimeField(auto_now_add=True)),
                 ('date_updated', models.DateTimeField(auto_now=True)),
+                ('version', models.DecimalField(max_digits=5, decimal_places=2)),
                 ('uuid', models.CharField(unique=True, max_length=64, db_index=True)),
-                ('start_time', models.DateTimeField()),
-                ('end_time', models.DateTimeField()),
-                ('last_update_time', models.DateTimeField(null=True)),
-                ('ending_method', models.CharField(max_length=16, blank=True)),
-                ('type', models.CharField(max_length=32)),
-                ('location', models.CharField(max_length=32)),
-                ('description', models.TextField(blank=True)),
-                ('is_complete', models.BooleanField(default=False)),
-                ('log_file', models.FileField(storage=openbadge.models.OverwriteStorage(), upload_to=openbadge.models.upload_to, blank=True)),
-                ('hub_uuid', models.ForeignKey(related_name='meetings', to='openbadge.Hub')),
+                ('metadata', models.OneToOneField(related_name='none', to='openbadge.Event')),
             ],
             options={
                 'abstract': False,
@@ -89,7 +97,7 @@ class Migration(migrations.Migration):
                 ('date_created', models.DateTimeField(auto_now_add=True)),
                 ('date_updated', models.DateTimeField(auto_now=True)),
                 ('name', models.CharField(max_length=64)),
-                ('email', models.EmailField(unique=True, max_length=254)),
+                ('email', models.EmailField(max_length=254, blank=True)),
                 ('badge', models.CharField(max_length=64)),
             ],
             options={
@@ -123,5 +131,15 @@ class Migration(migrations.Migration):
             model_name='hub',
             name='project',
             field=models.ForeignKey(related_name='hubs', to='openbadge.Project', null=True),
+        ),
+        migrations.AddField(
+            model_name='event',
+            name='hub',
+            field=models.ForeignKey(related_name='events', on_delete=django.db.models.deletion.SET_NULL, to='openbadge.Hub', null=True),
+        ),
+        migrations.AddField(
+            model_name='event',
+            name='meeting',
+            field=models.ForeignKey(related_name='events', to='openbadge.Meeting'),
         ),
     ]
