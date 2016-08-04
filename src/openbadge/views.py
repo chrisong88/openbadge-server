@@ -34,7 +34,7 @@ def render_to(template):
 @app_view
 @api_view(['GET'])
 def projects(request):
-    if (request.method == 'GET'):
+    if request.method == 'GET':
         return get_project(request)
     return HttpResponseNotFound()
 
@@ -63,7 +63,6 @@ def meetings(request, project_key):
     return HttpResponseNotFound()
 
 
-# TODO: Make this actually do something
 @api_view(['PUT'])
 def put_meeting(request, project_key):
     chunks = simplejson.loads(request.data.get('chunks'))
@@ -101,7 +100,7 @@ def get_meeting(request, project_key):
 @api_view(['POST'])
 def post_meeting(request, project_key):
     meeting = request.meeting  # type: Meeting
-    hub = request.hub # type: Hub
+    hub = request.hub  # type: Hub
     events = simplejson.loads(request.data.get('chunks'))
     events = [simplejson.loads(event) for event in events]  # this is a bit strange... the actual chunk data posted
                                                             # is a json array of json strings of objects. So we have to
