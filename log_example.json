@@ -150,7 +150,7 @@ This allows us to store every log-line in the database as an object with the sam
 {
   "type": "meeting ended",
   "log_timestamp": 1469499293.321,
-  "log_serial": 8,
+  "log_index": 8,
   "hub":"`hub's uuid`",
   "data": {
     "end_cause": "manual"

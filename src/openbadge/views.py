@@ -192,8 +192,8 @@ def post_meeting(request, project_key):
                 meeting.metadata.save()
 
         elif db_event.type == "meeting ended":
-            metadata = meeting.metadata.data
-            metadata['members']['is_active'] = False
+            meeting.metadata.data['is_active'] = False
+            meeting.metadata.data['end_time'] = float(db_event.log_timestamp)
             meeting.metadata.save()
 
 

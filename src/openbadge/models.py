@@ -254,7 +254,7 @@ class Event(models.Model):
     hub = models.ForeignKey(Hub, related_name="events", null=True, on_delete=models.SET_NULL)
     """Which hub recorded this event"""
 
-    data = JSONField()
+    data = JSONField(null=True, blank=True)
     """Whatever other data there is about this event"""
 
     meeting = models.ForeignKey(Meeting, related_name="events", on_delete=models.CASCADE)

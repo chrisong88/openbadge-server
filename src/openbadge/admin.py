@@ -6,7 +6,7 @@ from django.contrib import admin
 from django.contrib.admin.widgets import AdminTextareaWidget
 from django.contrib.auth import admin as auth_admin
 from django.utils.translation import ugettext_lazy as _
-from .models import OpenBadgeUser, Meeting, Member, Project, Hub
+from .models import OpenBadgeUser, Meeting, Member, Project, Hub, Event
 
 
 def register(model):
@@ -60,6 +60,11 @@ class HubInline(admin.TabularInline):
     readonly_fields = ("key",)
 
 
+class EventInline(admin.TabularInline):
+    model = Event
+    extra = 0
+    readonly_fields = ("uuid",)
+
 @register(Project)
 class ProjectAdmin(admin.ModelAdmin):
     readonly_fields = ("key",)
@@ -96,29 +101,32 @@ class ProjectAdmin(admin.ModelAdmin):
 
 @register(Meeting)
 class MeetingAdmin(admin.ModelAdmin):
-    readonly_fields = ("key",'is_active','active_members','active_hubs',)
+    readonly_fields = ("key",'is_active','active_members','active_hubs','start','last_update','end')
     list_display = ('uuid', 'project',
                     'is_active','active_members','active_hubs',
-                    'duration')
+                    'duration','start','last_update','end')
     actions_on_top = True
+
+    inlines = (EventInline,)
 
     eastern = timezone("US/Eastern")
 
     def get_local_time(self, timestamp):
-        return pytz.utc.localize(datetime.utcfromtimestamp(timestamp))\
-            .astimezone(self.eastern)\
-            .strftime('%Y-%m-%d %H:%M:%S %Z%z')
+        try:
+            return pytz.utc.localize(datetime.utcfromtimestamp(timestamp))\
+                .astimezone(self.eastern)\
+                .strftime('%Y-%m-%d %H:%M:%S %Z%z')
+        except TypeError:
+            return None
 
     def last_update(self, inst):
-        if inst.last_update_timestamp:
-            return self.get_local_time(inst.events.latest().log_timestamp)
+        return self.get_local_time(inst.events.latest().log_timestamp)
 
     def start(self, inst):
         return self.get_local_time(inst.get_meta('start_time'))
 
     def end(self, inst):
-        if inst.end_time:
-            return self.get_local_time(inst.events.latest().log_timestamp)
+        return self.get_local_time(inst.get_meta('end_time'))
 
     @staticmethod
     def metadata_string(inst):
