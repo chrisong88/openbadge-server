@@ -45,14 +45,13 @@ This allows us to store every log-line in the database as an object with the sam
 //   currently both adds and removes fall under "member changed". I think this will make it easier to parse data just about
 //   people coming/leaving, but this could be slpit into two
 {
-  "type": "member changed",
+  "type": "member joined",
   "log_timestamp": 1469492042.566,
   "log_index": 1,
   "hub":"`hub's uuid`",
   "data": {
-    "change": "join",
     "badge_address": "E3:09:E5:88:38:B2",
-    "member_key": "Z01MPNJJ9Y"
+    "key": "Z01MPNJJ9Y"
   }
 }
 

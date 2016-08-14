@@ -39,7 +39,20 @@ class MemberInline(admin.TabularInline):
 
 class MeetingInLine(admin.TabularInline):
     model = Meeting
-    readonly_fields = ("uuid",)
+    extra = 0
+    readonly_fields = ('key',"uuid",'is_active','active_members','active_hubs')
+    fields = ('key','uuid','is_active','active_members','active_hubs')
+
+
+    def is_active(self, inst):
+        return inst.metadata.data['is_active']
+    def active_members(self, inst):
+        #return inst.metadata.data['members']
+        return ', '.join([member for member,data in inst.metadata.data['members'].iteritems() if data['active']])
+    def active_hubs(self, inst):
+        #return inst.metadata.data['hubs']
+        return ', '.join([hub for hub,data in inst.metadata.data['hubs'].iteritems() if data['active']])
+
 
 
 class HubInline(admin.TabularInline):
@@ -76,19 +89,16 @@ class ProjectAdmin(admin.ModelAdmin):
     @staticmethod
     def total_meeting_time(inst):
         if inst.meetings.all():
-            def time_diff(x):
-                return (x.last_update_timestamp - x.start_time)
-
-            return timedelta(seconds = int(sum(
-                [time_diff(meeting) for meeting in inst.meetings.all() if meeting.end_time])))
-        return "NONE"
+            return timedelta(seconds =
+                int(sum([meeting.duration().total_seconds() for meeting in inst.meetings.all()])))
+        return timedelta(seconds=0)
 
 
 @register(Meeting)
 class MeetingAdmin(admin.ModelAdmin):
-    readonly_fields = ("key",)
+    readonly_fields = ("key",'is_active','active_members','active_hubs',)
     list_display = ('uuid', 'project',
-                    'metadata',
+                    'is_active','active_members','active_hubs',
                     'duration')
     actions_on_top = True
 
@@ -101,17 +111,25 @@ class MeetingAdmin(admin.ModelAdmin):
 
     def last_update(self, inst):
         if inst.last_update_timestamp:
-            return self.get_local_time(inst.last_update_timestamp)
+            return self.get_local_time(inst.events.latest().log_timestamp)
 
     def start(self, inst):
-        if inst.start_time:
-            return self.get_local_time(inst.start_time)
+        return self.get_local_time(inst.get_meta('start_time'))
 
     def end(self, inst):
         if inst.end_time:
-            return self.get_local_time(inst.end_time)
+            return self.get_local_time(inst.events.latest().log_timestamp)
 
-    def duration(self, inst):
-        return timedelta(seconds=int(inst.last_update_timestamp - inst.start_time))
+    @staticmethod
+    def metadata_string(inst):
+        return inst.metadata.data
 
-    duration.admin_order_field = 'duration'
+
+    def is_active(self, inst):
+        return inst.metadata.data['is_active']
+    def active_members(self, inst):
+        #return inst.metadata.data['members']
+        return ', '.join([member for member,data in inst.metadata.data['members'].iteritems() if data['active']])
+    def active_hubs(self, inst):
+        #return inst.metadata.data['hubs']
+        return ', '.join([hub for hub,data in inst.metadata.data['hubs'].iteritems() if data['active']])

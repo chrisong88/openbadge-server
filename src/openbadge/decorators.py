@@ -4,33 +4,21 @@ from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFou
 from .models import Meeting, Hub
 
 
-class SimpleRequest:
-    def __init__(self, request, hub, meeting):
-        self.meeting = meeting
-        self.method = request.method
-        self.hub = hub
-        self.headers = request.META
-        self.data = request.data
-
-
 def is_own_project(f):
-    """ensures a hub that accesses a given /:projectKey/whatever is a member of the project with that Key"""
+    """ensures a hub that accesses a given /:projectID/whatever is a member of the project with that ID"""
 
     @wraps(f)
     def wrap(request, project_key, *args, **kwargs):
 
+
+        hub_uuid = request.META.get("HTTP_X_HUB_UUID")
         try:
-            hub = Hub.objects.prefetch_related("project").get(uuid=request.META.get("HTTP_X_HUB_UUID"))
+            hub = Hub.objects.prefetch_related("project").get(uuid=hub_uuid)
         except Hub.DoesNotExist:
             return HttpResponseNotFound()
-
-        try:
-            meeting = Meeting.objects.get(uuid=request.META.get("HTTP_X_MEETING_UUID"))
-        except Meeting.DoesNotExist:
-            meeting = None
-
-        if str(hub.project.key) == str(project_key):
-            return f(SimpleRequest(request, hub, meeting), project_key, *args, **kwargs)
+        hub_project_key = hub.project.key
+        if str(hub_project_key) == str(project_key):
+            return f(request, project_key, *args, **kwargs)
 
         class HttpResponseUnauthorized(HttpResponse):
             status_code = 401
