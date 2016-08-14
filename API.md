@@ -75,56 +75,67 @@ X-HUB-UUID   | text    |
 
 ```json
 {
-  "project_id": 3,
-  "name": "Human Dynamics Main",
-  "members": {
-    "Bill Gates": {
-      "badge": "DB:C8:1B:F8:B8:0F",
-      "name": "Bill Gates",
-      "id": 9
+  "project": {
+    "active_meetings": [],
+    "key": "OROMVGQFGH",
+    "badge_map": {
+      "FA:DF:C3:8C:99:3C": {
+        "name": "Eleni Andrikos",
+        "key": "BLWQE3O527"
+      },
+      "F2:74:78:84:E2:76": {
+        "name": "Walaa Al",
+        "key": "61JQH99IMA"
+      },
+      "FB:29:43:AC:9B:70": {
+        "name": "Oren Lederman",
+        "key": "1WREPE6TJ2"
+      },
+      "D2:3C:F6:B9:87:24": {
+        "name": "Gestina Yassa",
+        "key": "Q0Y5VSMRJR"
+      },
+      "EF:18:8D:7E:4C:F3": {
+        "name": "Jackson Kearl",
+        "key": "9M4XMOUV96"
+      }
     },
-    "Jackson Kearl": {
-      "badge": "D2:3C:F6:B9:87:24",
-      "name": "Jackson Kearl",
-      "id": 5
+    "members": {
+      "Jackson Kearl": {
+        "badge": "EF:18:8D:7E:4C:F3",
+        "id": 12,
+        "name": "Jackson Kearl"
+      },
+      "Eleni Andrikos": {
+        "badge": "FA:DF:C3:8C:99:3C",
+        "id": 13,
+        "name": "Eleni Andrikos"
+      },
+      "Walaa Al": {
+        "badge": "F2:74:78:84:E2:76",
+        "id": 15,
+        "name": "Walaa Al"
+      },
+      "Oren Lederman": {
+        "badge": "FB:29:43:AC:9B:70",
+        "id": 11,
+        "name": "Oren Lederman"
+      },
+      "Gestina Yassa": {
+        "badge": "D2:3C:F6:B9:87:24",
+        "id": 14,
+        "name": "Gestina Yassa"
+      }
     },
-    "Cynthia Zhou": {
-      "badge": "FA:DF:C3:8C:99:3C",
-      "name": "Cynthia Zhou",
-      "id": 7
-    },
-    "Oren Lederman": {
-      "badge": "E3:09:E5:88:38:B2",
-      "name": "Oren Lederman",
-      "id": 6
-    },
-    "Steve Jobs": {
-      "badge": "F2:74:78:84:E2:76",
-      "name": "Steve Jobs",
-      "id": 8
-    }
+    "id": 4,
+    "name": "Test Project 1"
   },
-  "badge_map": {
-    "FA:DF:C3:8C:99:3C": {
-      "name": "Cynthia Zhou",
-      "key": "EE2FRYT3LT"
+  "hub": {
+    "last_updates": {
+      "Proj1| 1470997887.655": 6
     },
-    "E3:09:E5:88:38:B2": {
-      "name": "Oren Lederman",
-      "key": "Z01MPNJJ9Y"
-    },
-    "F2:74:78:84:E2:76": {
-      "name": "Steve Jobs",
-      "key": "XBACZK85G6"
-    },
-    "DB:C8:1B:F8:B8:0F": {
-      "name": "Bill Gates",
-      "key": "PC8FI0C9IU"
-    },
-    "D2:3C:F6:B9:87:24": {
-      "name": "Jackson Kearl",
-      "key": "0R4PW5FXP5"
-    }
+    "name": "My Computer",
+    "su": true
   }
 }
 ```
@@ -163,10 +174,10 @@ Key          | Type    |
 X-HUB-UUID   | text    |
 
 
-**Passed FILE**
+**Body**
+
 ```json
-{"uuid":"12345","start_time":"2016-07-02T15:31:07.767Z","location":"meetingroom","type":"study","description":""}
-//chunk data
+meeting_init_data:{"type":"meeting started","log_index":0,"log_timestamp": 1470997887.655,"data":{"log_version":"2.1","uuid":"Proj1| 1470997887.655"}}
 ```
 
 *Response Codes*
@@ -211,85 +222,148 @@ X-GET-FILES  | text    |
 ```json
 {
   "meetings": {
-    "c65c943da5487d51_1468987120250": {
+    "Proj1| 1470997888.655": {
+      "events": [
+        {
+          "data": {
+            "uuid": "Proj1| 1470997888.655",
+            "log_version": "2.1",
+            "start_time": 1470997887.655,
+            "is_active": true,
+            "members": {},
+            "hubs": {}
+          },
+          "log_timestamp": "1470997887.655",
+          "type": "meeting started",
+          "hub": "Proj1Comp1",
+          "log_index": 0
+        }
+      ],
       "metadata": {
-        "group": "Explore",
-        "uuid": "c65c943da5487d51_1468987120250",
-        "showVisualization": true,
-        "timestamp": 1468987120.25,
-        "start_time": "2016-07-20T03:58:40.250Z",
-        "last_log_serial": 0,
-        "moderator": "none",
-        "location": "meetingroom",
-        "members": [
-          "0R4PW5FXP5",
-          "Z01MPNJJ9Y",
-          "PC8FI0C9IU"
-        ],
-        "last_log_time": 1468987120.264,
-        "type": "study",
-        "description": ""
+        "uuid": "Proj1| 1470997888.655",
+        "log_version": "2.1",
+        "start_time": 1470997887.655,
+        "is_active": true,
+        "members": {},
+        "hubs": {}
       }
     },
-    "c65c943da5487d51_1468988149042": {
+    "Proj1| 1470997887.655": {
+      "events": [
+        {
+          "data": {
+            "key": "1WREPE6TJ2"
+          },
+          "log_timestamp": "1470637514.450",
+          "type": "member joined",
+          "hub": "Proj1Comp1",
+          "log_index": 2
+        },
+        {
+          "data": {
+            "key": "9M4XMOUV96"
+          },
+          "log_timestamp": "1470637514.451",
+          "type": "member joined",
+          "hub": "Proj1Comp1",
+          "log_index": 3
+        },
+        {
+          "data": {
+            "locale": "GMT-0400 (EDT)"
+          },
+          "log_timestamp": "1470637960.240",
+          "type": "hub joined",
+          "hub": "Proj1Comp1",
+          "log_index": 1
+        },
+        {
+          "data": {
+            "uuid": "Proj1| 1470997887.655",
+            "log_version": "2.1",
+            "start_time": 1470997887.655,
+            "is_active": false,
+            "end_time": 1470999890,
+            "members": {
+              "1WREPE6TJ2": {
+                "active": false,
+                "timestamp": 1470997990.655
+              },
+              "9M4XMOUV96": {
+                "active": false,
+                "timestamp": 1470997990.655
+              },
+              "1WREPE6TJ": {
+                "active": true,
+                "timestamp": 1470637514.45
+              }
+            },
+            "hubs": {
+              "Proj1Comp1": {
+                "active": true,
+                "timestamp": 1470637960.24
+              }
+            }
+          },
+          "log_timestamp": "1470997887.655",
+          "type": "meeting started",
+          "hub": "Proj1Comp1",
+          "log_index": 0
+        },
+        {
+          "data": {
+            "key": "1WREPE6TJ2"
+          },
+          "log_timestamp": "1470997990.655",
+          "type": "member left",
+          "hub": "Proj1Comp1",
+          "log_index": 4
+        },
+        {
+          "data": {
+            "key": "9M4XMOUV96"
+          },
+          "log_timestamp": "1470997990.655",
+          "type": "member left",
+          "hub": "Proj1Comp1",
+          "log_index": 5
+        },
+        {
+          "data": {
+            "method": "manual"
+          },
+          "log_timestamp": "1470999890.000",
+          "type": "meeting ended",
+          "hub": "Proj1Comp1",
+          "log_index": 6
+        }
+      ],
       "metadata": {
-        "group": "Explore",
-        "uuid": "c65c943da5487d51_1468988149042",
-        "showVisualization": true,
-        "timestamp": 1468988149.042,
-        "start_time": "2016-07-20T04:15:49.042Z",
-        "last_log_serial": 0,
-        "moderator": "none",
-        "location": "meetingroom",
-        "members": [
-          "Z01MPNJJ9Y",
-          "XBACZK85G6",
-          "EE2FRYT3LT",
-          "0R4PW5FXP5",
-          "PC8FI0C9IU"
-        ],
-        "last_log_time": 1468988149.047,
-        "type": "study",
-        "description": ""
-      }
-    },
-    "c65c943da5487d51_1468983088679": {
-      "metadata": {
-        "group": "Explore",
-        "uuid": "c65c943da5487d51_1468983088679",
-        "showVisualization": true,
-        "timestamp": 1468983088.679,
-        "start_time": "2016-07-20T02:51:28.679Z",
-        "last_log_serial": 0,
-        "moderator": "none",
-        "location": "meetingroom",
-        "members": [
-          "EE2FRYT3LT",
-          "0R4PW5FXP5"
-        ],
-        "last_log_time": 1468983088.691,
-        "type": "study",
-        "description": ""
-      }
-    },
-    "c65c943da5487d51_1468987429694": {
-      "metadata": {
-        "group": "Explore",
-        "uuid": "c65c943da5487d51_1468987429694",
-        "showVisualization": true,
-        "timestamp": 1468987429.694,
-        "start_time": "2016-07-20T04:03:49.694Z",
-        "last_log_serial": 0,
-        "moderator": "none",
-        "location": "meetingroom",
-        "members": [
-          "EE2FRYT3LT",
-          "0R4PW5FXP5",
-          "Z01MPNJJ9Y"
-        ],
-        "last_log_time": 1468987429.708,
-        "type": "study",
-        "description": ""
+        "uuid": "Proj1| 1470997887.655",
+        "log_version": "2.1",
+        "start_time": 1470997887.655,
+        "is_active": false,
+        "end_time": 1470999890,
+        "members": {
+          "1WREPE6TJ2": {
+            "active": false,
+            "timestamp": 1470997990.655
+          },
+          "9M4XMOUV96": {
+            "active": false,
+            "timestamp": 1470997990.655
+          },
+          "1WREPE6TJ": {
+            "active": true,
+            "timestamp": 1470637514.45
+          }
+        },
+        "hubs": {
+          "Proj1Comp1": {
+            "active": true,
+            "timestamp": 1470637960.24
+          }
+        }
       }
     }
   }
@@ -313,7 +387,7 @@ Add chunks to a meeting
 Key          | Type    |
 -------------|---------|
 X-HUB-UUID  | text    |
-
+X-MEETING-UUID| text|
 
 **Passed JSON**
 ```json
@@ -363,7 +437,7 @@ Create a hub in the default project.
 Key          | Type    |
 -------------|---------|
 X-APP-UUID   | text    |
-
+X-PROJECT-NAME |text|
 
 *Response Codes*
 - 200 - hub created
@@ -371,16 +445,97 @@ X-APP-UUID   | text    |
 - 500 - bad UUID, already registered?
 
 
+**Returned JSON**
+
+```json
+{
+  "status": "added to project",
+  "project": {
+    "active_meetings": [
+      {
+        "uuid": "Proj1| 1470997888.655",
+        "log_version": "2.1",
+        "start_time": 1470997887.655,
+        "is_active": true,
+        "members": {},
+        "hubs": {}
+      }
+    ],
+    "key": "OROMVGQFGH",
+    "badge_map": {
+      "FA:DF:C3:8C:99:3C": {
+        "name": "Eleni Andrikos",
+        "key": "BLWQE3O527"
+      },
+      "F2:74:78:84:E2:76": {
+        "name": "Walaa Al",
+        "key": "61JQH99IMA"
+      },
+      "FB:29:43:AC:9B:70": {
+        "name": "Oren Lederman",
+        "key": "1WREPE6TJ2"
+      },
+      "D2:3C:F6:B9:87:24": {
+        "name": "Gestina Yassa",
+        "key": "Q0Y5VSMRJR"
+      },
+      "EF:18:8D:7E:4C:F3": {
+        "name": "Jackson Kearl",
+        "key": "9M4XMOUV96"
+      }
+    },
+    "members": {
+      "Jackson Kearl": {
+        "badge": "EF:18:8D:7E:4C:F3",
+        "id": 12,
+        "name": "Jackson Kearl"
+      },
+      "Eleni Andrikos": {
+        "badge": "FA:DF:C3:8C:99:3C",
+        "id": 13,
+        "name": "Eleni Andrikos"
+      },
+      "Walaa Al": {
+        "badge": "F2:74:78:84:E2:76",
+        "id": 15,
+        "name": "Walaa Al"
+      },
+      "Oren Lederman": {
+        "badge": "FB:29:43:AC:9B:70",
+        "id": 11,
+        "name": "Oren Lederman"
+      },
+      "Gestina Yassa": {
+        "badge": "D2:3C:F6:B9:87:24",
+        "id": 14,
+        "name": "Gestina Yassa"
+      }
+    },
+    "id": 4,
+    "name": "Test Project 1"
+  },
+  "hub": {
+    "last_updates": {
+      "Proj1| 1470997887.655": 6
+    },
+    "name": "My Computer",
+    "su": true
+  }
+}
+```
+
+
 <a name="gethub"></a>
 ###GET /:projectID/hubs
 
-Get hub's name and meetings.
+Get hub's name and meetings, with all members added since given timestamp
 
 **Headers Passed**
 
 Key          | Type    |
 -------------|---------|
 X-HUB-UUID   | text    |
+X-LAST-UPDATE
 
 
 *Response Codes*
@@ -392,12 +547,38 @@ X-HUB-UUID   | text    |
 
 ```json
 {
-  "meetings": {
-    "12345": {"last_log_timestamp": some UNIX now-epoch int,
-              "last_log_serial": 43,
-              "is_complete": T/F
+  "badge_map": {
+    "FA:DF:C3:8C:99:3C": {
+      "name": "Eleni Andrikos",
+      "key": "BLWQE3O527"
+    },
+    "F2:74:78:84:E2:76": {
+      "name": "Walaa Al",
+      "key": "61JQH99IMA"
+    },
+    "FB:29:43:AC:9B:70": {
+      "name": "Oren Lederman",
+      "key": "1WREPE6TJ2"
+    },
+    "D2:3C:F6:B9:87:24": {
+      "name": "Gestina Yassa",
+      "key": "Q0Y5VSMRJR"
+    },
+    "EF:18:8D:7E:4C:F3": {
+      "name": "Jackson Kearl",
+      "key": "9M4XMOUV96"
+    }
   },
-  "name": "East Conference Room"
+  "meeting": {
+    "uuid": "Proj1| 1470997888.655",
+    "log_version": "2.1",
+    "start_time": 1470997887.655,
+    "is_active": true,
+    "members": {},
+    "hubs": {}
+  },
+  "su": true,
+  "last_update": 0
 }
 ```
 

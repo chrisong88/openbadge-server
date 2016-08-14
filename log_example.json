@@ -1,9 +1,8 @@
-In general formatted:
+Logs 2.1 ane in general formatted:
 {
   "type": "blah",                   " // what happened"
   "log_timestamp": 1469492042.344,  " // when the phone heard that it happened"
   "log_index": 0,                   " // what order the phone observed things happening in"
-  "hub":"`hub's uuid`",
   "data": {
       "more details about what happened. This is the only part that will have key changes across log-lines"
   }
@@ -19,9 +18,8 @@ This allows us to store every log-line in the database as an object with the sam
   "type": "meeting started",
   "log_timestamp": 1469492042.344,
   "log_index": 0,
-  "hub":"`hub's uuid`",
   "data": {
-    "log_version": "2.0"
+    "log_version": "2.1"
     "uuid": "[Project Name]|[Start Time]"
   }
 }
@@ -32,7 +30,6 @@ This allows us to store every log-line in the database as an object with the sam
   "type": "hub joined",
   "log_timestamp": 1469492042.344,
   "log_index": 0,
-  "hub":"`hub's uuid`",
   "data": {
     "key": "523fh3",
     "hub_locale": "US/Eastern"
@@ -48,7 +45,6 @@ This allows us to store every log-line in the database as an object with the sam
   "type": "member joined",
   "log_timestamp": 1469492042.566,
   "log_index": 1,
-  "hub":"`hub's uuid`",
   "data": {
     "badge_address": "E3:09:E5:88:38:B2",
     "key": "Z01MPNJJ9Y"
@@ -60,7 +56,6 @@ This allows us to store every log-line in the database as an object with the sam
   "type": "audio received",
   "log_timestamp": 1469492044.543,
   "log_index": 2,
-  "hub":"`hub's uuid`",
   "data": {
     "voltage": 2.75,              "// the voltage in volts"
     "timestamp": 1469492043.731,  "// concat the ms and sec"
@@ -77,7 +72,6 @@ This allows us to store every log-line in the database as an object with the sam
   "type": "acceleration received",
   "log_timestamp": 1469492045.143,
   "log_index": 3,
-  "hub":"`hub's uuid`",
   "data": {
     "voltage": 2.75,              "// the voltage in volts, times 64, floored, to scale to a 8-bit."
     "timestamp": 1469492043.731,  "// concat the ms and sec"
@@ -99,7 +93,6 @@ This allows us to store every log-line in the database as an object with the sam
   "type": "proximity received",
   "log_timestamp": 1469492045.143,
   "log_index": 4,
-  "hub":"`hub's uuid`",
   "data": {
     "voltage": 2.75,              "// the voltage in volts, times 64, floored, to scale to a 8-bit."
     "timestamp": 1469492043.731,  "// concat the ms and sec"
@@ -118,7 +111,7 @@ This allows us to store every log-line in the database as an object with the sam
   "type": "pause started",
   "log_timestamp": 1469492045.543,
   "log_index": 5,
-  "hub":"`hub's uuid`",
+  "data": {}
 }
 
 
@@ -126,7 +119,6 @@ This allows us to store every log-line in the database as an object with the sam
   "type": "pause extended",
   "log_timestamp": 1469492324.51,
   "log_index": 6,
-  "hub":"`hub's uuid`",
   "data": {
     "previous_seconds_remaining": 614,
     "seconds_added": 600
@@ -138,7 +130,6 @@ This allows us to store every log-line in the database as an object with the sam
   "type": "pause ended",
   "log_timestamp": 1469493293.432,
   "log_index": 7,
-  "hub":"`hub's uuid`",
   "data": {
     "resume_cause": "manual",
     "seconds_remaining": 23
@@ -151,7 +142,6 @@ This allows us to store every log-line in the database as an object with the sam
   "type": "meeting ended",
   "log_timestamp": 1469499293.321,
   "log_index": 8,
-  "hub":"`hub's uuid`",
   "data": {
     "end_cause": "manual"
   }
