@@ -107,7 +107,7 @@ class Project(BaseModel):
                                     for history in hub.histories.all()
                                  },
                 "su": hub.su,
-                'meeting': hub.current_meeting.to_object() if hub.current_meeting else None
+                'current_meeting': hub.current_meeting.to_object(hub) if hub.current_meeting else None
             }
         }
 
@@ -131,7 +131,7 @@ class Hub(BaseModel):
         return {"badge_map":{member.badge: {"name": member.name, "key": member.key}
                              for member in self.project.members.all()
                              if int(member.date_updated.strftime("%s")) > last_update},
-                "meeting":self.current_meeting.get_meta(self) if self.current_meeting else None,
+                "meeting":self.current_meeting.get_meta(hub=self) if self.current_meeting else None,
                 "su": self.su}
 
     def __unicode__(self):
@@ -194,8 +194,10 @@ class Meeting(BaseModel):
 
 
     def get_meta(self, hub=None):
+        """Get the metadata (start time, end time, members active. Either for a specific hub, or all"""
         if hub:
             return {
+                'uuid':self.uuid,
                 'start_time': self.start_time,
                 'end_time': self.end_time if self.end_time else None,
                 'history': History.objects.get(meeting=self, hub=hub).to_object()
@@ -203,10 +205,11 @@ class Meeting(BaseModel):
                             else None
             }
         return {
+                'uuid':self.uuid,
                 'start_time': self.start_time,
                 'end_time': self.end_time if self.end_time else None,
-                'history': { hub_history.hub.uuid: History.objects.get(meeting=self, hub=hub_history.hub).to_object()
-                                        for hub_history in History.objects.filter(meeting=self) }
+                'history': { hub_history.hub.uuid: hub_history.to_object()
+                                        for hub_history in self.histories.all() }
             }
 
     def get_events(self, hub = None):
@@ -216,14 +219,14 @@ class Meeting(BaseModel):
         else:
             return self.events.all()
 
-    def to_object(self, get_file = False):
+    def to_object(self, hub=None, get_file = False):
         """Get an representation of this object for use with HTTP responses"""
 
         if get_file:
             return {"events": [event.to_object() for event in self.get_events()],
-                    "metadata":self.get_meta()}
+                    "metadata":self.get_meta(hub)}
 
-        return {"metadata": self.get_meta()}
+        return {"metadata": self.get_meta(hub=hub)}
 
 
 class History(models.Model):

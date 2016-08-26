@@ -1,8 +1,8 @@
-#OpenBadge API -- The working bits
+#OpenBadge API
 
 
 ##API Version 2.2: Multiple Endpoint meetings!
-These doc are valid and at least partially tested against commit 2bfd456a099e3d2cd5616cfa1dfc182d4e2d861e
+These docs are valid and at least partially tested against this commit
 
 
 ##Overview
@@ -77,6 +77,8 @@ X-HUB-UUID   | text    |
 ```json
 {
   "project": {
+    "name": "Test Project 1",
+    "key": "HAYFO5WZ6O",
     "members": {
       "C1:10:9A:32:E0:C4": {
         "name": "نادين",
@@ -85,30 +87,20 @@ X-HUB-UUID   | text    |
       "E3:26:AC:CD:0B:65": {
         "name": "Paul",
         "key": "3H7Y8SZ53Y"
-      },
-      "E8:AB:1E:5D:08:C9": {
-        "name": "Cynthia",
-        "key": "LNIDYUBNHO"
-      },
-      "EA:B6:FF:F8:35:A3": {
-        "name": "Walaa",
-        "key": "5LSA8S9VJX"
-      },
-      "E3:09:E5:88:38:B2": {
-        "name": "Jackson",
-        "key": "ZGSMAUZ83D"
-      },
-      "D2:3C:F6:B9:87:24": {
-        "name": "Oren",
-        "key": "BEVA2BVBHH"
       }
     },
     "active_meetings": [
       {
         "metadata": {
           "start_time": "1469492042.344",
-          "end_time": null,
           "history": {
+            "postman": {
+              "active_members": [
+                "5LSA8S9VJX"
+              ],
+              "last_log_index": 2,
+              "is_hub_active": true
+            },
             "browser": {
               "active_members": [
                 "ZGSMAUZ83D",
@@ -117,31 +109,30 @@ X-HUB-UUID   | text    |
               "last_log_index": 4,
               "is_hub_active": true
             }
-          }
+          },
+          "uuid": "HAYFO5WZ6O|2414523523413.432",
+          "end_time": null
         }
       }
     ],
-    "name": "Test Project 1",
-    "key": "HAYFO5WZ6O"
   },
   "hub": {
     "last_updates": {
       "HAYFO5WZ6O|2414523523413.432": 4
     },
-    "meeting": {
+    "current_meeting": {
       "metadata": {
         "start_time": "1469492042.344",
-        "end_time": null,
         "history": {
-          "browser": {
-            "active_members": [
-              "ZGSMAUZ83D",
-              "BEVA2BVBHH"
-            ],
-            "last_log_index": 4,
-            "is_hub_active": true
-          }
-        }
+          "active_members": [
+            "ZGSMAUZ83D",
+            "BEVA2BVBHH"
+          ],
+          "last_log_index": 4,
+          "is_hub_active": true
+        },
+        "uuid": "HAYFO5WZ6O|2414523523413.432",
+        "end_time": null
       }
     },
     "name": "My Computer",
@@ -478,7 +469,6 @@ X-LAST-UPDATE| POSIX   |
 {
   "meeting": {
     "start_time": "1469492042.344",
-    "end_time": null,
     "history": {
       "active_members": [
         "ZGSMAUZ83D",
@@ -486,7 +476,9 @@ X-LAST-UPDATE| POSIX   |
       ],
       "last_log_index": 4,
       "is_hub_active": true
-    }
+    },
+    "uuid": "HAYFO5WZ6O|2414523523413.432",
+    "end_time": null
   },
   "su": false,
   "badge_map": {
@@ -497,24 +489,8 @@ X-LAST-UPDATE| POSIX   |
     "E3:26:AC:CD:0B:65": {
       "name": "Paul",
       "key": "3H7Y8SZ53Y"
-    },
-    "E8:AB:1E:5D:08:C9": {
-      "name": "Cynthia",
-      "key": "LNIDYUBNHO"
-    },
-    "EA:B6:FF:F8:35:A3": {
-      "name": "Walaa",
-      "key": "5LSA8S9VJX"
-    },
-    "E3:09:E5:88:38:B2": {
-      "name": "Jackson",
-      "key": "ZGSMAUZ83D"
-    },
-    "D2:3C:F6:B9:87:24": {
-      "name": "Oren",
-      "key": "BEVA2BVBHH"
     }
-  }
+}
 ```
 
 
