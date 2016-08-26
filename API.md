@@ -16,11 +16,10 @@ There exist a collection of `God` level endpoints. These require a special key t
 not be available to any hubs meant for use by the end user. All other endpoints are restricted
 to hubs that are members of the project being accessed. 
 
-In general Headers are used exclusively for Authentication, either via a `X-GODKEY` for God-level
-endpoints, or by the `badgeID` (ng-Device's `uuid`). The exeption to this is in `GET`'s, which 
-sometimes use headers to specify what is to be gotten.
-
-
+Every request should have an `X-APPKEY` header, or it will 401.
+Endpoints accessible to project hubs should have an X-DEVICE-UUID header,
+or they will error unauthorized. All request options are set through Headers.
+The only instance where anything else is used is in POSTing data.  
 
 
 
