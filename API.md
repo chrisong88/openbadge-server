@@ -2,6 +2,8 @@
 
 
 ##API Version 2.2: Multiple Endpoint meetings!
+These doc are valid and at least partially tested against commit 2bfd456a099e3d2cd5616cfa1dfc182d4e2d861e
+
 
 ##Overview
 
