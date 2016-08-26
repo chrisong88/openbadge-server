@@ -4,7 +4,7 @@ from django.http import HttpResponse, HttpResponseNotFound, JsonResponse
 from django.shortcuts import render
 from rest_framework.decorators import api_view
 from .decorators import app_view, is_own_project
-from .models import Meeting, Project, Hub, Event, Member, History
+from .models import Meeting, Project, Hub, Event, Member, CurrentState
 from django.db import IntegrityError
 
 def json_response(**kwargs):
@@ -105,11 +105,13 @@ def post_meeting(request, project_key):
         meeting = Meeting.objects.get(uuid=request.META.get("HTTP_X_MEETING_UUID"))
     except Hub.DoesNotExist:
         return HttpResponseNotFound()
+    except Meeting.DoesNotExist:
+        return HttpResponseNotFound()
 
     try:
-        history = History.objects.get(hub=hub, meeting=meeting) # type:History
-    except History.DoesNotExist:
-        history = History(hub=hub, meeting=meeting) # type:History
+        history = CurrentState.objects.get(hub=hub, meeting=meeting) # type:CurrentState
+    except CurrentState.DoesNotExist:
+        history = CurrentState(hub=hub, meeting=meeting) # type:CurrentState
 
 
     events = simplejson.loads(request.data['events'])
@@ -178,9 +180,6 @@ def post_meeting(request, project_key):
 
         elif db_event.type == "member joined":
             member_key = db_event.data['key']
-
-            print "Member joined!!!", member_key
-            print member_key not in history.members
 
             if (member_key not in history.members
                     or history.members[member_key]['last_activity_update'] < db_event.log_index):

@@ -6,7 +6,7 @@ from django.contrib import admin
 from django.contrib.admin.widgets import AdminTextareaWidget
 from django.contrib.auth import admin as auth_admin
 from django.utils.translation import ugettext_lazy as _
-from .models import OpenBadgeUser, Meeting, Member, Project, Hub, Event, History
+from .models import OpenBadgeUser, Meeting, Member, Project, Hub, Event, CurrentState
 
 
 def register(model):
@@ -46,14 +46,14 @@ class MeetingInLine(admin.TabularInline):
 
     def active_members(self, inst):
         active_members = []
-        for history in inst.histories.all():
-            active_members += history.to_object()['active_members']
+        for current_state in inst.current_states.all():
+            active_members += current_state.to_object()['active_members']
         return ', '.join(active_members)
 
     def active_hubs(self, inst):
-        return simplejson.dumps([{history.hub.uuid: history.last_log_index}
-                          for history in inst.histories.all()
-                          if history.is_active])
+        return simplejson.dumps([{current_state.hub.uuid: current_state.last_log_index}
+                          for current_state in inst.current_states.all()
+                          if current_state.is_active])
 
 
 
@@ -67,8 +67,8 @@ class EventInline(admin.TabularInline):
     model = Event
     extra = 0
 
-class HistoryInline(admin.TabularInline):
-    model = History
+class CurrentStateInline(admin.TabularInline):
+    model = CurrentState
     extra = 0
 
 @register(Project)
@@ -112,7 +112,7 @@ class MeetingAdmin(admin.ModelAdmin):
                     'duration','start_time','end_time')
     actions_on_top = True
 
-    inlines = (EventInline, HistoryInline)
+    inlines = (EventInline, CurrentStateInline)
 
     eastern = timezone("US/Eastern")
 
@@ -131,12 +131,12 @@ class MeetingAdmin(admin.ModelAdmin):
 
     def active_members(self, inst):
         active_members = []
-        for history in inst.histories.all():
-            active_members += history.to_object()['active_members']
+        for current_state in inst.current_states.all():
+            active_members += current_state.to_object()['active_members']
         return ', '.join(active_members)
 
     def active_hubs(self, inst):
-        return simplejson.dumps([{history.hub.uuid: history.last_log_index}
-                          for history in inst.histories.all()
-                          if history.is_active])
+        return simplejson.dumps([{current_state.hub.uuid: current_state.last_log_index}
+                          for current_state in inst.current_states.all()
+                          if current_state.is_active])
 

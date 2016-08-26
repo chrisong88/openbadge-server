@@ -98,18 +98,19 @@ class Project(BaseModel):
                 'name': self.name,
                 'members': {member.badge: {"name": member.name, "key": member.key}
                             for member in self.members.all()},
-                'active_meetings': [meeting.to_object()
+                'active_meetings': {meeting.uuid:meeting.to_object()
                                         for meeting in self.meetings.filter(is_active=True)
-                                    ]},
-            'hub': {
-                "name": hub.name,
-                "last_updates": {history.meeting.uuid: history.last_log_index
-                                    for history in hub.histories.all()
-                                 },
-                "su": hub.su,
-                'current_meeting': hub.current_meeting.to_object(hub) if hub.current_meeting else None
-            }
+                                    }}
         }
+        #     'hub': {
+        #         "name": hub.name,
+        #         "last_log_updates": {current_state.meeting.uuid: current_state.last_log_index
+        #                             for current_state in hub.current_states.all()
+        #                          },
+        #         "su": hub.su,
+        #         'current_meeting': hub.current_meeting.to_object(hub) if hub.current_meeting else None
+        #     }
+        # }
 
 
 class Hub(BaseModel):
@@ -128,10 +129,13 @@ class Hub(BaseModel):
     """ng-device generated uuid"""
 
     def to_object(self, last_update=0):
-        return {"badge_map":{member.badge: {"name": member.name, "key": member.key}
+        return {"member_updates":{member.badge: {"name": member.name, "key": member.key}
                              for member in self.project.members.all()
                              if int(member.date_updated.strftime("%s")) > last_update},
-                "meeting":self.current_meeting.get_meta(hub=self) if self.current_meeting else None,
+                "current_meeting":self.current_meeting.get_meta(hub=self) if self.current_meeting else None,
+                "last_log_updates": {current_state.meeting.uuid: current_state.last_log_index
+                                     for current_state in self.current_states.all()
+                },
                 "su": self.su}
 
     def __unicode__(self):
@@ -190,7 +194,7 @@ class Meeting(BaseModel):
 
 
     def __unicode__(self):
-        return unicode(self.project.key) + " | " + str(self.start_time)
+        return self.uuid
 
 
     def get_meta(self, hub=None):
@@ -200,16 +204,16 @@ class Meeting(BaseModel):
                 'uuid':self.uuid,
                 'start_time': self.start_time,
                 'end_time': self.end_time if self.end_time else None,
-                'history': History.objects.get(meeting=self, hub=hub).to_object()
-                            if History.objects.filter(meeting=self, hub=hub).exists()
+                'current_state': CurrentState.objects.get(meeting=self, hub=hub).to_object()
+                            if CurrentState.objects.filter(meeting=self, hub=hub).exists()
                             else None
             }
         return {
                 'uuid':self.uuid,
                 'start_time': self.start_time,
                 'end_time': self.end_time if self.end_time else None,
-                'history': { hub_history.hub.uuid: hub_history.to_object()
-                                        for hub_history in self.histories.all() }
+                'current_states': { hub_current_state.hub.uuid: hub_current_state.to_object()
+                                        for hub_current_state in self.current_states.all() }
             }
 
     def get_events(self, hub = None):
@@ -229,7 +233,7 @@ class Meeting(BaseModel):
         return {"metadata": self.get_meta(hub=hub)}
 
 
-class History(models.Model):
+class CurrentState(models.Model):
 
     is_active = models.BooleanField(default=False)
 
@@ -240,8 +244,8 @@ class History(models.Model):
     members = JSONField(null=True, blank=True, default={})
     """JSON associated array of active member address's to {timestamp when we last heard from them, is_active}"""
 
-    hub = models.ForeignKey('Hub', related_name="histories", null=True, on_delete=models.SET_NULL)
-    meeting = models.ForeignKey('Meeting', related_name="histories", null=True, on_delete=models.CASCADE)
+    hub = models.ForeignKey('Hub', related_name="current_states", null=True, on_delete=models.SET_NULL)
+    meeting = models.ForeignKey('Meeting', related_name="current_states", null=True, on_delete=models.CASCADE)
 
     def to_object(self):
 
@@ -256,7 +260,7 @@ class History(models.Model):
 
     class Meta:
         index_together = ['meeting', 'hub']
-        verbose_name_plural = "histories"
+        verbose_name_plural = "current_states"
 
 
 class Event(models.Model):

@@ -22,7 +22,41 @@ or they will error unauthorized. All request options are set through Headers.
 The only instance where anything else is used is in POSTing data.  
 
 
+##Theoretical Roadmap
 
+### Hub initialization
+At the start of each session, the hub will perform a [GET](#getproject) `/projects` request. 
+This will return a 404 if the hub has not been configured on the backend yet, or information about the
+project, including a project `key` value' otherwise. 
+
+If it does 404, the hub should then perform a [PUT](#puthub) `/0/hubs` request.
+This will add it to the `OB-DEFAULT` project on the backend. 
+
+Upon configuration on the backend, the hub should perform another [GET](#getproject) `/projects`, 
+to get information about its project, especially the project's key.
+
+The data returned from the [GET](#getproject) `/projects` should be stored local to the hub to be used in case
+the hub cannot connect to the internet at some other session. 
+
+
+### Hub 'stale' uploads
+Upon completion of the [GET](#getproject) `/projects`, the hub should [GET](#gethub) `/:projectKEY/hubs`
+to receive information about itself. This will give the hub a `last_log_updates` object mapping
+meeting uuid's the backend knows this hub has ever been associated with to the last log index the backend
+has received from this hub towards that meeting. 
+
+For each local log the hub has, it should ensure the `last_log_updates` properly maps the uuid to 
+the hubs own idea of the last log available. If the hub has a local meeting that isn't in this map,
+it should [PUT](#putmeeting) `/:projectKEY/meetings` that meeting, then [POST](#postmeeting) `/:projectKEY/meetings`
+the full log. If map has a meeting, but not in full, the hub should [POST](#postmeeting) `/:projectKEY/meetings` 
+the remaining events.
+
+###In-Meeting Process
+To begin a meeting, the hub should [PUT](#putmeeting) `/:projectKEY/meetings` that meeting, with uuid 
+of the form `[projectKEY]_[POSIX_timestamp]` (seconds.ms) then [POST](#postmeeting) `/:projectKEY/meetings`
+events as corresponding to `log_example.json`. 
+
+The hub should periodically [GET](#gethub) `/:projectKEY/hubs` in a meeting in order to update it's badge ownership map.
 
 ##Endpoints
 ####Project Level Endpoints
@@ -76,66 +110,37 @@ X-HUB-UUID   | text    |
 ```json
 {
   "project": {
-    "name": "Test Project 1",
-    "key": "HAYFO5WZ6O",
+    "name": "OB-DEFAULT",
+    "key": "RQ1JU8VFYB",
     "members": {
-      "C1:10:9A:32:E0:C4": {
+      "E3:09:E5:88:38:B2": {
         "name": "نادين",
-        "key": "E0E2OQ79ZB"
+        "key": "RTHNV1HF8M"
       },
-      "E3:26:AC:CD:0B:65": {
-        "name": "Paul",
-        "key": "3H7Y8SZ53Y"
+      "D2:3C:F6:B9:87:24": {
+        "name": "Jackson Kearl",
+        "key": "CCZZY9F5EW"
       }
     },
-    "active_meetings": [
-      {
+    "active_meetings": {
+      "HAYFO5WZ6O_2414523523413.432": {
         "metadata": {
           "start_time": "1469492042.344",
-          "history": {
-            "postman": {
-              "active_members": [
-                "5LSA8S9VJX"
-              ],
-              "last_log_index": 2,
-              "is_hub_active": true
-            },
+          "end_time": null,
+          "uuid": "HAYFO5WZ6O_2414523523413.432",
+          "current_states": {
             "browser": {
               "active_members": [
-                "ZGSMAUZ83D",
-                "BEVA2BVBHH"
+                "CCZZY9F5EW",
+                "RTHNV1HF8M"
               ],
-              "last_log_index": 4,
+              "last_log_index": 3,
               "is_hub_active": true
             }
-          },
-          "uuid": "HAYFO5WZ6O|2414523523413.432",
-          "end_time": null
+          }
         }
       }
-    ],
-  },
-  "hub": {
-    "last_updates": {
-      "HAYFO5WZ6O|2414523523413.432": 4
-    },
-    "current_meeting": {
-      "metadata": {
-        "start_time": "1469492042.344",
-        "history": {
-          "active_members": [
-            "ZGSMAUZ83D",
-            "BEVA2BVBHH"
-          ],
-          "last_log_index": 4,
-          "is_hub_active": true
-        },
-        "uuid": "HAYFO5WZ6O|2414523523413.432",
-        "end_time": null
-      }
-    },
-    "name": "My Computer",
-    "su": false
+    }
   }
 }
 ```
@@ -211,7 +216,7 @@ X-GET-FILES  | text    |
 *Response Codes*
 - 200 - got meetings
 - 401 - hub doesn't belong to project
-- 404 - hubUUID not found
+- 404 - hubUUID or meetingUUID not found
 
 **Returned JSON**
 
@@ -479,29 +484,33 @@ X-LAST-UPDATE| POSIX   |
 
 ```json
 {
-  "meeting": {
-    "start_time": "1469492042.344",
-    "history": {
-      "active_members": [
-        "ZGSMAUZ83D",
-        "BEVA2BVBHH"
-      ],
-      "last_log_index": 4,
-      "is_hub_active": true
+  "last_log_updates": {
+    "HAYFO5WZ6O_2414523523413.432": 3
+  },
+  "member_updates": {
+    "E3:09:E5:88:38:B2": {
+      "name": "نادين",
+      "key": "RTHNV1HF8M"
     },
-    "uuid": "HAYFO5WZ6O|2414523523413.432",
-    "end_time": null
+    "D2:3C:F6:B9:87:24": {
+      "name": "Jackson Kearl",
+      "key": "CCZZY9F5EW"
+    }
   },
   "su": false,
-  "badge_map": {
-    "C1:10:9A:32:E0:C4": {
-      "name": "نادين",
-      "key": "E0E2OQ79ZB"
+  "current_meeting": {
+    "start_time": "1469492042.344",
+    "current_state": {
+      "active_members": [
+        "CCZZY9F5EW",
+        "RTHNV1HF8M"
+      ],
+      "last_log_index": 3,
+      "is_hub_active": true
     },
-    "E3:26:AC:CD:0B:65": {
-      "name": "Paul",
-      "key": "3H7Y8SZ53Y"
-    }
+    "uuid": "HAYFO5WZ6O_2414523523413.432",
+    "end_time": null
+  }
 }
 ```
 
