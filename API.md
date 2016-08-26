@@ -373,8 +373,21 @@ X-MEETING-UUID| text|
 
 **Passed JSON**
 ```json
-["{"uuid":"12345","start_time":"2016-07-02T15:31:07.767Z","location":"meetingroom","type":"study","description":""}", ...
-//chunk data as JSON'd list of JSON'd objects
+events:[
+{
+"type": "member joined",
+"log_timestamp": 1469492049.344,
+"log_index": 2,
+"data":
+    {"address":"E3:09:E5:88:38:B2","key":"ZGSMAUZ83D"}
+ },
+{
+"type": "member joined",
+"log_timestamp": 1469492057.344,
+"log_index": 3,
+"data": 
+    {"address":"D2:3C:F6:B9:87:24","key":"BEVA2BVBHH"}
+}
 ]
 ```
 
