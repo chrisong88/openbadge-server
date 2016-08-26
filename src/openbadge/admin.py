@@ -6,7 +6,7 @@ from django.contrib import admin
 from django.contrib.admin.widgets import AdminTextareaWidget
 from django.contrib.auth import admin as auth_admin
 from django.utils.translation import ugettext_lazy as _
-from .models import OpenBadgeUser, Meeting, Member, Project, Hub, Event
+from .models import OpenBadgeUser, Meeting, Member, Project, Hub, Event, History
 
 
 def register(model):
@@ -44,14 +44,17 @@ class MeetingInLine(admin.TabularInline):
     fields = ('key','uuid','is_active','active_members','active_hubs')
 
 
-    def is_active(self, inst):
-        return inst.metadata.data['is_active']
     def active_members(self, inst):
-        #return inst.metadata.data['members']
-        return ', '.join([member for member,data in inst.metadata.data['members'].iteritems() if data['active']])
+        active_members = []
+        for history in inst.histories.all():
+            active_members += history.to_object()['active_members']
+        return ', '.join(active_members)
+
     def active_hubs(self, inst):
-        #return inst.metadata.data['hubs']
-        return ', '.join([hub for hub,data in inst.metadata.data['hubs'].iteritems() if data['active']])
+        return simplejson.dumps([{history.hub.uuid: history.last_log_index}
+                          for history in inst.histories.all()
+                          if history.is_active])
+
 
 
 
@@ -63,7 +66,10 @@ class HubInline(admin.TabularInline):
 class EventInline(admin.TabularInline):
     model = Event
     extra = 0
-    readonly_fields = ("uuid",)
+
+class HistoryInline(admin.TabularInline):
+    model = History
+    extra = 0
 
 @register(Project)
 class ProjectAdmin(admin.ModelAdmin):
@@ -101,13 +107,12 @@ class ProjectAdmin(admin.ModelAdmin):
 
 @register(Meeting)
 class MeetingAdmin(admin.ModelAdmin):
-    readonly_fields = ("key",'is_active','active_members','active_hubs','start','last_update','end')
-    list_display = ('uuid', 'project',
-                    'is_active','active_members','active_hubs',
-                    'duration','start','last_update','end')
+    readonly_fields = ("key",'is_active','active_members','active_hubs','start_time','end_time')
+    list_display = ('uuid', 'project','is_active','active_members','active_hubs',
+                    'duration','start_time','end_time')
     actions_on_top = True
 
-    inlines = (EventInline,)
+    inlines = (EventInline, HistoryInline)
 
     eastern = timezone("US/Eastern")
 
@@ -119,25 +124,19 @@ class MeetingAdmin(admin.ModelAdmin):
         except TypeError:
             return None
 
-    def last_update(self, inst):
-        return self.get_local_time(inst.events.latest().log_timestamp)
-
-    def start(self, inst):
-        return self.get_local_time(inst.get_meta('start_time'))
-
-    def end(self, inst):
-        return self.get_local_time(inst.get_meta('end_time'))
-
     @staticmethod
     def metadata_string(inst):
         return inst.metadata.data
 
 
-    def is_active(self, inst):
-        return inst.metadata.data['is_active']
     def active_members(self, inst):
-        #return inst.metadata.data['members']
-        return ', '.join([member for member,data in inst.metadata.data['members'].iteritems() if data['active']])
+        active_members = []
+        for history in inst.histories.all():
+            active_members += history.to_object()['active_members']
+        return ', '.join(active_members)
+
     def active_hubs(self, inst):
-        #return inst.metadata.data['hubs']
-        return ', '.join([hub for hub,data in inst.metadata.data['hubs'].iteritems() if data['active']])
+        return simplejson.dumps([{history.hub.uuid: history.last_log_index}
+                          for history in inst.histories.all()
+                          if history.is_active])
+

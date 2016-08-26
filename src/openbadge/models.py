@@ -1,9 +1,7 @@
 # coding=utf-8
 import random
 import string
-
 from datetime import timedelta
-
 import simplejson
 from django.contrib.auth import models as auth_models
 from django.db import models
@@ -94,31 +92,28 @@ class Project(BaseModel):
         return {'meetings': {meeting.uuid: meeting.to_object(get_file) for meeting in self.meetings.all()}}
 
     def to_object(self, hub):
-        """
-        this should be things that are relatively constant, and won't need to be updated mid-meeting
-        """
-
         return {
             'project': {
-                'id': self.id,
                 'key': self.key,
                 'name': self.name,
-                'badge_map': {member.badge: {"name": member.name, "key": member.key} for member in self.members.all()},
-                'members': {member.name: member.to_object() for member in self.members.all()},
-                'active_meetings': [meeting.metadata.data for meeting in self.meetings.all()
-                                        if meeting.metadata.data['is_active']]
-            },
+                'members': {member.badge: {"name": member.name, "key": member.key}
+                            for member in self.members.all()},
+                'active_meetings': [meeting.to_object()
+                                        for meeting in self.meetings.filter(is_active=True)
+                                    ]},
             'hub': {
                 "name": hub.name,
-                "last_updates": {meeting.uuid: meeting.get_last_log_index_for_hub(hub)
-                                 for meeting in hub.get_meetings()},
-                "su": hub.su
+                "last_updates": {history.meeting.uuid: history.last_log_index
+                                    for history in hub.histories.all()
+                                 },
+                "su": hub.su,
+                'meeting': hub.current_meeting.to_object() if hub.current_meeting else None
             }
         }
 
 
 class Hub(BaseModel):
-    """Definition of a Hub, which is owned by a Project and has am externally generated uuid"""
+    """Definition of a Hub, which is owned by a Project and has an externally generated uuid"""
 
     name = models.CharField(max_length=64)
 
@@ -132,23 +127,11 @@ class Hub(BaseModel):
     uuid = models.CharField(max_length=64, db_index=True, unique=True)
     """ng-device generated uuid"""
 
-    def get_meetings(self):
-        meetings = []
-        for meeting in self.project.meetings.all():
-            metadata = meeting.metadata.data
-            if self.uuid in metadata['hubs']:
-                meetings.append(meeting)
-        return meetings
-
     def to_object(self, last_update=0):
-        """
-        These are all the things that change as the meeting progresses. Mainly the last_update for the hub.
-        """
-        return {"last_update": self.current_meeting.get_last_log_index_for_hub(self) if self.current_meeting else None,
-                "badge_map":{member.badge: {"name": member.name, "key": member.key}
+        return {"badge_map":{member.badge: {"name": member.name, "key": member.key}
                              for member in self.project.members.all()
                              if int(member.date_updated.strftime("%s")) > last_update},
-                "meeting":self.current_meeting.metadata.data if self.current_meeting else None,
+                "meeting":self.current_meeting.get_meta(self) if self.current_meeting else None,
                 "su": self.su}
 
     def __unicode__(self):
@@ -169,7 +152,7 @@ class Member(BaseModel):
     project = models.ForeignKey(Project, related_name="members", on_delete=models.CASCADE)
 
     def to_object(self):
-        return {'id':self.id, 'name':self.name, 'badge':self.badge}
+        return {'key':self.key, 'name':self.name, 'badge':self.badge}
 
     def __unicode__(self):
         return self.name
@@ -186,30 +169,45 @@ class Meeting(BaseModel):
     """The logging version this project uses"""
 
     uuid = models.CharField(max_length=64, db_index=True, unique=True)
-    """something like [project_name]|[start_time], start time in ms, making it infeasible to `hack`"""
+    """something like [project_key]|[start_time], start time in ms, making it infeasible to `hack`"""
 
-    # Meta type data
-    metadata = models.ForeignKey('Event', related_name="none", null=True, on_delete=models.CASCADE)
+    is_active = models.BooleanField(default=False)
+    """If there are still hubs present --- effectively: `end_time === None`"""
+
+    start_time = models.DecimalField(decimal_places=3, max_digits=20, null=True, blank=True)
+    """When the first hub joins"""
+
+    end_time = models.DecimalField(decimal_places=3, max_digits=20, null=True, blank=True)
+    """When the last hub leaves"""
 
     project = models.ForeignKey(Project, related_name="meetings", on_delete=models.CASCADE)
     """The Project this Meeting belongs to"""
 
     def duration(self):
-        if self.get_meta('end_time'):
-            timedelta(seconds=int(self.get_meta('end_time') - self.get_meta('start_time')))
-        return timedelta(seconds=int(float(self.events.latest().log_timestamp) - self.get_meta('start_time')))
+        if self.end_time:
+            timedelta(seconds=int(self.end_time - self.start_time))
+        return timedelta(seconds=int(self.events.latest().log_timestamp- self.start_time))
+
 
     def __unicode__(self):
-        return unicode(self.project.name) + "|" + str(self.get_meta('start_time'))
+        return unicode(self.project.key) + " | " + str(self.start_time)
 
-    def get_meta(self, property=None):
-        if property:
-            try:
-                return self.metadata.data[property]
-            except KeyError:
-                return None
 
-        return self.metadata.data
+    def get_meta(self, hub=None):
+        if hub:
+            return {
+                'start_time': self.start_time,
+                'end_time': self.end_time if self.end_time else None,
+                'history': History.objects.get(meeting=self, hub=hub).to_object()
+                            if History.objects.filter(meeting=self, hub=hub).exists()
+                            else None
+            }
+        return {
+                'start_time': self.start_time,
+                'end_time': self.end_time if self.end_time else None,
+                'history': { hub_history.hub.uuid: History.objects.get(meeting=self, hub=hub_history.hub).to_object()
+                                        for hub_history in History.objects.filter(meeting=self) }
+            }
 
     def get_events(self, hub = None):
         """get all events, optionally by hub"""
@@ -218,20 +216,44 @@ class Meeting(BaseModel):
         else:
             return self.events.all()
 
-    def get_last_log_index_for_hub(self, hub):
-        try:
-            return self.get_events(hub).latest().log_index
-        except Event.DoesNotExist:
-            return -1
-
     def to_object(self, get_file = False):
         """Get an representation of this object for use with HTTP responses"""
 
         if get_file:
             return {"events": [event.to_object() for event in self.get_events()],
-                    "metadata":self.metadata.data}
+                    "metadata":self.get_meta()}
 
-        return {"metadata": self.metadata.data}
+        return {"metadata": self.get_meta()}
+
+
+class History(models.Model):
+
+    is_active = models.BooleanField(default=False)
+
+    last_activity_update = models.IntegerField(default=-1)
+
+    last_log_index = models.IntegerField(default=-1)
+
+    members = JSONField(null=True, blank=True, default={})
+    """JSON associated array of active member address's to {timestamp when we last heard from them, is_active}"""
+
+    hub = models.ForeignKey('Hub', related_name="histories", null=True, on_delete=models.SET_NULL)
+    meeting = models.ForeignKey('Meeting', related_name="histories", null=True, on_delete=models.CASCADE)
+
+    def to_object(self):
+
+        return {
+            'is_hub_active': self.is_active,
+            'last_log_index': self.last_log_index,
+            'active_members': [
+                address for address, status in self.members.iteritems() if status['is_active']
+            ]
+        }
+        pass
+
+    class Meta:
+        index_together = ['meeting', 'hub']
+        verbose_name_plural = "histories"
 
 
 class Event(models.Model):
@@ -239,8 +261,8 @@ class Event(models.Model):
     Represents a piece of data uploaded by the phone. Could be anything from meeting starts to accelerometer data
     """
 
-    uuid = models.CharField(max_length=128, primary_key=True)
-    """Concatenation of meeting key, hub uuid, and log_index"""
+    id = models.AutoField(primary_key=True)
+    """Some sort of index thing"""
 
     type = models.CharField(max_length=64)
     """What kind of event this is: meeting start, audio receive, etc"""
@@ -270,13 +292,11 @@ class Event(models.Model):
             'data':self.data
         }
 
-    def to_json(self):
-        """This returns a string that's basically the same format as a log line"""
-        return simplejson.dumps(self.to_object())
-
     def __unicode__(self):
-        return self.type + "@" + self.uuid
+        return self.type + " recorded by " + self.hub.uuid + " at " + str(float(self.log_timestamp))
 
     class Meta:
+        unique_together = (('log_index', 'hub', 'meeting'),)
+        index_together = [['log_index', 'hub', 'meeting']]
         ordering = ['log_timestamp']
         get_latest_by = 'log_index'

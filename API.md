@@ -1,15 +1,14 @@
 #OpenBadge API -- The working bits
 
+
+##API Version 2.2: Multiple Endpoint meetings!
+
 ##Overview
-The basic idea in this backend is that there should be only one way to do anything. 
-This sometimes means requiring two or more API calls for something that ought to take
-one, but it is my belief that this makes it simpler. The exception to this is in first creation
-of a project, where one may supply the hubs and badges to initialize, skipping over 
-the `PUT /:projectID/hubs` and `PUT /:projectID/badges` endpoints.
+
 
 All standard connections will start with a `GET` to `/projects`, and henceforth 
-use the `projectID` returned by that request to communicate with the server, in the form of
-`PUT`'s, `GET`'s, and `POST`'s to `/:projectID/[meetings, hubs, badges]`
+use the `projectKEY` returned by that request to communicate with the server, in the form of
+`PUT`'s, `GET`'s, and `POST`'s to `/:projectKEY/[meetings|hubs|badges]`
 
 There exist a collection of `God` level endpoints. These require a special key that will
 not be available to any hubs meant for use by the end user. All other endpoints are restricted
@@ -59,7 +58,7 @@ Method                |        Path            | Summary                       |
 <a name="getproject"></a>
 ###GET /projects
 
-Get badge ownership info and `project_id` for a hub
+Get badge ownership info, project data, and hub data. 
 
 **Headers Passed**
 
@@ -69,73 +68,82 @@ X-HUB-UUID   | text    |
 
 *Response Codes*
 - 200 - got project info
-- 404 - hubID not found?
+- 404 - hub uuid not found
 
 **Returned JSON**
 
 ```json
 {
   "project": {
-    "active_meetings": [],
-    "key": "OROMVGQFGH",
-    "badge_map": {
-      "FA:DF:C3:8C:99:3C": {
-        "name": "Eleni Andrikos",
-        "key": "BLWQE3O527"
+    "members": {
+      "C1:10:9A:32:E0:C4": {
+        "name": "نادين",
+        "key": "E0E2OQ79ZB"
       },
-      "F2:74:78:84:E2:76": {
-        "name": "Walaa Al",
-        "key": "61JQH99IMA"
+      "E3:26:AC:CD:0B:65": {
+        "name": "Paul",
+        "key": "3H7Y8SZ53Y"
       },
-      "FB:29:43:AC:9B:70": {
-        "name": "Oren Lederman",
-        "key": "1WREPE6TJ2"
+      "E8:AB:1E:5D:08:C9": {
+        "name": "Cynthia",
+        "key": "LNIDYUBNHO"
+      },
+      "EA:B6:FF:F8:35:A3": {
+        "name": "Walaa",
+        "key": "5LSA8S9VJX"
+      },
+      "E3:09:E5:88:38:B2": {
+        "name": "Jackson",
+        "key": "ZGSMAUZ83D"
       },
       "D2:3C:F6:B9:87:24": {
-        "name": "Gestina Yassa",
-        "key": "Q0Y5VSMRJR"
-      },
-      "EF:18:8D:7E:4C:F3": {
-        "name": "Jackson Kearl",
-        "key": "9M4XMOUV96"
+        "name": "Oren",
+        "key": "BEVA2BVBHH"
       }
     },
-    "members": {
-      "Jackson Kearl": {
-        "badge": "EF:18:8D:7E:4C:F3",
-        "id": 12,
-        "name": "Jackson Kearl"
-      },
-      "Eleni Andrikos": {
-        "badge": "FA:DF:C3:8C:99:3C",
-        "id": 13,
-        "name": "Eleni Andrikos"
-      },
-      "Walaa Al": {
-        "badge": "F2:74:78:84:E2:76",
-        "id": 15,
-        "name": "Walaa Al"
-      },
-      "Oren Lederman": {
-        "badge": "FB:29:43:AC:9B:70",
-        "id": 11,
-        "name": "Oren Lederman"
-      },
-      "Gestina Yassa": {
-        "badge": "D2:3C:F6:B9:87:24",
-        "id": 14,
-        "name": "Gestina Yassa"
+    "active_meetings": [
+      {
+        "metadata": {
+          "start_time": "1469492042.344",
+          "end_time": null,
+          "history": {
+            "browser": {
+              "active_members": [
+                "ZGSMAUZ83D",
+                "BEVA2BVBHH"
+              ],
+              "last_log_index": 4,
+              "is_hub_active": true
+            }
+          }
+        }
       }
-    },
-    "id": 4,
-    "name": "Test Project 1"
+    ],
+    "name": "Test Project 1",
+    "key": "HAYFO5WZ6O"
   },
   "hub": {
     "last_updates": {
-      "Proj1| 1470997887.655": 6
+      "HAYFO5WZ6O|2414523523413.432": 4
+    },
+    "meeting": {
+      "metadata": {
+        "start_time": "1469492042.344",
+        "end_time": null,
+        "history": {
+          "browser": {
+            "active_members": [
+              "ZGSMAUZ83D",
+              "BEVA2BVBHH"
+            ],
+            "last_log_index": 4,
+            "is_hub_active": true
+          }
+        }
+      }
     },
     "name": "My Computer",
-    "su": true
+    "su": false
   }
 }
 ```
@@ -165,25 +173,21 @@ X-HUB-UUID   | text    |
 <a name="putmeeting"></a>
 ###PUT /:projectID/meetings
 
-Create a meeting with given logfile.
+Create a meeting with given log version and uuid.
 
 **Headers Passed**
 
 Key          | Type    |
 -------------|---------|
 X-HUB-UUID   | text    |
-
-
-**Body**
-
-```json
-meeting_init_data:{"type":"meeting started","log_index":0,"log_timestamp": 1470997887.655,"data":{"log_version":"2.1","uuid":"Proj1| 1470997887.655"}}
-```
+X-LOG-VERSION| numeric |
+X-MEETING-UUID|text|
 
 *Response Codes*
 - 200 - meeting created
 - 401 - hub doesn't belong to project
 - 404 - hubUUID not found
+- 500 - meeting with that UUID likely already exists. or maybe malformed headers
 
 **Returned JSON**
 
@@ -199,7 +203,7 @@ meeting_init_data:{"type":"meeting started","log_index":0,"log_timestamp": 14709
 <a name="getmeeting"></a>
 ###GET /:projectID/meetings
 
-Get all meetigns in a project, with or without thier respective files. 
+Get all meetings in a project, with or without their respective files. 
 
 If X-GET-FILES.lower() is equal to "true", this will return a UUID-accessible Associated Array of metadata and chunk
 as separate entries in a dictionary. Otherwise, it will return a UUID-accessible Associated Array of metadata objects
@@ -222,146 +226,132 @@ X-GET-FILES  | text    |
 ```json
 {
   "meetings": {
-    "Proj1| 1470997888.655": {
+    "HAYFO5WZ6O|2414523523413.432": {
       "events": [
         {
-          "data": {
-            "uuid": "Proj1| 1470997888.655",
-            "log_version": "2.1",
-            "start_time": 1470997887.655,
-            "is_active": true,
-            "members": {},
-            "hubs": {}
-          },
-          "log_timestamp": "1470997887.655",
+          "data": {},
+          "log_timestamp": "1469492042.344",
           "type": "meeting started",
-          "hub": "Proj1Comp1",
+          "hub": "browser",
           "log_index": 0
-        }
-      ],
-      "metadata": {
-        "uuid": "Proj1| 1470997888.655",
-        "log_version": "2.1",
-        "start_time": 1470997887.655,
-        "is_active": true,
-        "members": {},
-        "hubs": {}
-      }
-    },
-    "Proj1| 1470997887.655": {
-      "events": [
-        {
-          "data": {
-            "key": "1WREPE6TJ2"
-          },
-          "log_timestamp": "1470637514.450",
-          "type": "member joined",
-          "hub": "Proj1Comp1",
-          "log_index": 2
         },
         {
           "data": {
-            "key": "9M4XMOUV96"
+            "hub_locale": "US/Eastern"
           },
-          "log_timestamp": "1470637514.451",
-          "type": "member joined",
-          "hub": "Proj1Comp1",
-          "log_index": 3
-        },
-        {
-          "data": {
-            "locale": "GMT-0400 (EDT)"
-          },
-          "log_timestamp": "1470637960.240",
+          "log_timestamp": "1469492047.344",
           "type": "hub joined",
-          "hub": "Proj1Comp1",
+          "hub": "browser",
           "log_index": 1
         },
         {
           "data": {
-            "uuid": "Proj1| 1470997887.655",
-            "log_version": "2.1",
-            "start_time": 1470997887.655,
-            "is_active": false,
-            "end_time": 1470999890,
-            "members": {
-              "1WREPE6TJ2": {
-                "active": false,
-                "timestamp": 1470997990.655
-              },
-              "9M4XMOUV96": {
-                "active": false,
-                "timestamp": 1470997990.655
-              },
-              "1WREPE6TJ": {
-                "active": true,
-                "timestamp": 1470637514.45
-              }
-            },
-            "hubs": {
-              "Proj1Comp1": {
-                "active": true,
-                "timestamp": 1470637960.24
-              }
-            }
+            "hub_locale": "US/Eastern"
           },
-          "log_timestamp": "1470997887.655",
-          "type": "meeting started",
-          "hub": "Proj1Comp1",
+          "log_timestamp": "1469492047.344",
+          "type": "hub joined",
+          "hub": "postman",
           "log_index": 0
         },
         {
           "data": {
-            "key": "1WREPE6TJ2"
+            "key": "ZGSMAUZ83D",
+            "address": "E3:09:E5:88:38:B2"
           },
-          "log_timestamp": "1470997990.655",
-          "type": "member left",
-          "hub": "Proj1Comp1",
+          "log_timestamp": "1469492049.344",
+          "type": "member joined",
+          "hub": "browser",
+          "log_index": 2
+        },
+        {
+          "data": {
+            "key": "5LSA8S9VJX",
+            "address": "EA:B6:FF:F8:35:A3"
+          },
+          "log_timestamp": "1469492049.344",
+          "type": "member joined",
+          "hub": "postman",
+          "log_index": 2
+        },
+        {
+          "data": {
+            "key": "BEVA2BVBHH",
+            "address": "D2:3C:F6:B9:87:24"
+          },
+          "log_timestamp": "1469492057.344",
+          "type": "member joined",
+          "hub": "browser",
+          "log_index": 3
+        },
+        {
+          "data": {
+            "timestamp": 1469492043.731,
+            "sample_period": 50,
+            "member": "ZGSMAUZ83D",
+            "voltage": 2.75,
+            "samples": [
+              1,
+              2,
+              1,
+              1,
+              3,
+              1,
+              3,
+              1,
+              3
+            ],
+            "num_samples": 114,
+            "badge_address": "E3:09:E5:88:38:B2"
+          },
+          "log_timestamp": "1469492059.344",
+          "type": "audio received",
+          "hub": "browser",
           "log_index": 4
         },
         {
           "data": {
-            "key": "9M4XMOUV96"
+            "timestamp": 1469492043.731,
+            "sample_period": 50,
+            "member": "ZGSMAUZ83D",
+            "voltage": 2.75,
+            "samples": [
+              1,
+              2,
+              1,
+              1,
+              3,
+              1,
+              3,
+              1,
+              3
+            ],
+            "num_samples": 114,
+            "badge_address": "E3:09:E5:88:38:B2"
           },
-          "log_timestamp": "1470997990.655",
-          "type": "member left",
-          "hub": "Proj1Comp1",
-          "log_index": 5
-        },
-        {
-          "data": {
-            "method": "manual"
-          },
-          "log_timestamp": "1470999890.000",
-          "type": "meeting ended",
-          "hub": "Proj1Comp1",
-          "log_index": 6
+          "log_timestamp": "1469492059.344",
+          "type": "audio received",
+          "hub": "postman",
+          "log_index": 1
         }
       ],
       "metadata": {
-        "uuid": "Proj1| 1470997887.655",
-        "log_version": "2.1",
-        "start_time": 1470997887.655,
-        "is_active": false,
-        "end_time": 1470999890,
-        "members": {
-          "1WREPE6TJ2": {
-            "active": false,
-            "timestamp": 1470997990.655
+        "start_time": "1469492042.344",
+        "end_time": null,
+        "history": {
+          "postman": {
+            "active_members": [
+              "5LSA8S9VJX"
+            ],
+            "last_log_index": 2,
+            "is_hub_active": true
           },
-          "9M4XMOUV96": {
-            "active": false,
-            "timestamp": 1470997990.655
-          },
-          "1WREPE6TJ": {
-            "active": true,
-            "timestamp": 1470637514.45
-          }
-        },
-        "hubs": {
-          "Proj1Comp1": {
-            "active": true,
-            "timestamp": 1470637960.24
+          "browser": {
+            "active_members": [
+              "ZGSMAUZ83D",
+              "BEVA2BVBHH"
+            ],
+            "last_log_index": 4,
+            "is_hub_active": true
           }
         }
       }
@@ -380,7 +370,7 @@ X-GET-FILES  | text    |
 <a name="postmeeting"></a>
 ###POST /:projectID/meetings
 
-Add chunks to a meeting
+Add chunks to a meeting, tell us what chunks it has up until
 
 **Headers Passed**
 
@@ -404,7 +394,8 @@ X-MEETING-UUID| text|
 
 ```json
 {
-  "details": "data added"
+  "status": "success",
+  "last_update_index": 4
 }
 ```
 
@@ -428,99 +419,34 @@ X-MEETING-UUID| text|
 ##Hub Level Endpoints
 
 <a name="puthub"></a>
-###PUT /:anyNumber/hubs
+###PUT /0/hubs
 
-Create a hub in the default project.
+Create a new hub in a default project, or rename a hub that already exists
 
 **Headers Passed**
 
 Key          | Type    |
 -------------|---------|
 X-APP-UUID   | text    |
-X-PROJECT-NAME |text|
+X-HUB-UUID   | text    |
+X-HUB-NAME   | text    |
+
 
 *Response Codes*
 - 200 - hub created
-- 400 - bad request (no UUID?)
-- 500 - bad UUID, already registered?
 
 
 **Returned JSON**
 
 ```json
 {
-  "status": "added to project",
-  "project": {
-    "active_meetings": [
-      {
-        "uuid": "Proj1| 1470997888.655",
-        "log_version": "2.1",
-        "start_time": 1470997887.655,
-        "is_active": true,
-        "members": {},
-        "hubs": {}
-      }
-    ],
-    "key": "OROMVGQFGH",
-    "badge_map": {
-      "FA:DF:C3:8C:99:3C": {
-        "name": "Eleni Andrikos",
-        "key": "BLWQE3O527"
-      },
-      "F2:74:78:84:E2:76": {
-        "name": "Walaa Al",
-        "key": "61JQH99IMA"
-      },
-      "FB:29:43:AC:9B:70": {
-        "name": "Oren Lederman",
-        "key": "1WREPE6TJ2"
-      },
-      "D2:3C:F6:B9:87:24": {
-        "name": "Gestina Yassa",
-        "key": "Q0Y5VSMRJR"
-      },
-      "EF:18:8D:7E:4C:F3": {
-        "name": "Jackson Kearl",
-        "key": "9M4XMOUV96"
-      }
-    },
-    "members": {
-      "Jackson Kearl": {
-        "badge": "EF:18:8D:7E:4C:F3",
-        "id": 12,
-        "name": "Jackson Kearl"
-      },
-      "Eleni Andrikos": {
-        "badge": "FA:DF:C3:8C:99:3C",
-        "id": 13,
-        "name": "Eleni Andrikos"
-      },
-      "Walaa Al": {
-        "badge": "F2:74:78:84:E2:76",
-        "id": 15,
-        "name": "Walaa Al"
-      },
-      "Oren Lederman": {
-        "badge": "FB:29:43:AC:9B:70",
-        "id": 11,
-        "name": "Oren Lederman"
-      },
-      "Gestina Yassa": {
-        "badge": "D2:3C:F6:B9:87:24",
-        "id": 14,
-        "name": "Gestina Yassa"
-      }
-    },
-    "id": 4,
-    "name": "Test Project 1"
-  },
-  "hub": {
-    "last_updates": {
-      "Proj1| 1470997887.655": 6
-    },
-    "name": "My Computer",
-    "su": true
-  }
+  "status": "added hub to default project",
+}
+```
+
+```json
+{
+  "status": "renamed hub",
 }
 ```
 
@@ -528,14 +454,15 @@ X-PROJECT-NAME |text|
 <a name="gethub"></a>
 ###GET /:projectID/hubs
 
-Get hub's name and meetings, with all members added since given timestamp
+Get hub's name and meetings, with all members added since given timestamp, its super user status, and its history object for the 
+current meeting
 
 **Headers Passed**
 
 Key          | Type    |
 -------------|---------|
 X-HUB-UUID   | text    |
-X-LAST-UPDATE
+X-LAST-UPDATE| POSIX   |
 
 
 *Response Codes*
@@ -547,39 +474,45 @@ X-LAST-UPDATE
 
 ```json
 {
-  "badge_map": {
-    "FA:DF:C3:8C:99:3C": {
-      "name": "Eleni Andrikos",
-      "key": "BLWQE3O527"
-    },
-    "F2:74:78:84:E2:76": {
-      "name": "Walaa Al",
-      "key": "61JQH99IMA"
-    },
-    "FB:29:43:AC:9B:70": {
-      "name": "Oren Lederman",
-      "key": "1WREPE6TJ2"
-    },
-    "D2:3C:F6:B9:87:24": {
-      "name": "Gestina Yassa",
-      "key": "Q0Y5VSMRJR"
-    },
-    "EF:18:8D:7E:4C:F3": {
-      "name": "Jackson Kearl",
-      "key": "9M4XMOUV96"
+  "meeting": {
+    "start_time": "1469492042.344",
+    "end_time": null,
+    "history": {
+      "active_members": [
+        "ZGSMAUZ83D",
+        "BEVA2BVBHH"
+      ],
+      "last_log_index": 4,
+      "is_hub_active": true
     }
   },
-  "meeting": {
-    "uuid": "Proj1| 1470997888.655",
-    "log_version": "2.1",
-    "start_time": 1470997887.655,
-    "is_active": true,
-    "members": {},
-    "hubs": {}
-  },
-  "su": true,
-  "last_update": 0
-}
+  "su": false,
+  "badge_map": {
+    "C1:10:9A:32:E0:C4": {
+      "name": "نادين",
+      "key": "E0E2OQ79ZB"
+    },
+    "E3:26:AC:CD:0B:65": {
+      "name": "Paul",
+      "key": "3H7Y8SZ53Y"
+    },
+    "E8:AB:1E:5D:08:C9": {
+      "name": "Cynthia",
+      "key": "LNIDYUBNHO"
+    },
+    "EA:B6:FF:F8:35:A3": {
+      "name": "Walaa",
+      "key": "5LSA8S9VJX"
+    },
+    "E3:09:E5:88:38:B2": {
+      "name": "Jackson",
+      "key": "ZGSMAUZ83D"
+    },
+    "D2:3C:F6:B9:87:24": {
+      "name": "Oren",
+      "key": "BEVA2BVBHH"
+    }
+  }
 ```
 
 

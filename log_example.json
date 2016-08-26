@@ -31,7 +31,6 @@ This allows us to store every log-line in the database as an object with the sam
   "log_timestamp": 1469492042.344,
   "log_index": 0,
   "data": {
-    "key": "523fh3",
     "hub_locale": "US/Eastern"
   }
 }

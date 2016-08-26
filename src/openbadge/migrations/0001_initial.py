@@ -48,16 +48,26 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Event',
             fields=[
-                ('uuid', models.CharField(max_length=128, serialize=False, primary_key=True)),
+                ('id', models.AutoField(serialize=False, primary_key=True)),
                 ('type', models.CharField(max_length=64)),
                 ('log_timestamp', models.DecimalField(max_digits=20, decimal_places=3)),
                 ('log_index', models.IntegerField()),
-                ('data', jsonfield.fields.JSONField()),
+                ('data', jsonfield.fields.JSONField(null=True, blank=True)),
             ],
             options={
                 'ordering': ['log_timestamp'],
                 'get_latest_by': 'log_index',
             },
+        ),
+        migrations.CreateModel(
+            name='History',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('is_active', models.BooleanField()),
+                ('last_activity_update', models.DecimalField(max_digits=20, decimal_places=3)),
+                ('last_log_index', models.IntegerField(default=-1)),
+                ('members', jsonfield.fields.JSONField(default={}, null=True, blank=True)),
+            ],
         ),
         migrations.CreateModel(
             name='Hub',
@@ -83,7 +93,9 @@ class Migration(migrations.Migration):
                 ('date_updated', models.DateTimeField(auto_now=True)),
                 ('version', models.DecimalField(max_digits=5, decimal_places=2)),
                 ('uuid', models.CharField(unique=True, max_length=64, db_index=True)),
-                ('metadata', models.OneToOneField(related_name='none', to='openbadge.Event')),
+                ('is_active', models.BooleanField(default=False)),
+                ('start_time', models.DecimalField(max_digits=20, decimal_places=3)),
+                ('end_time', models.DecimalField(null=True, max_digits=20, decimal_places=3, blank=True)),
             ],
             options={
                 'abstract': False,
@@ -100,9 +112,6 @@ class Migration(migrations.Migration):
                 ('email', models.EmailField(max_length=254, blank=True)),
                 ('badge', models.CharField(max_length=64)),
             ],
-            options={
-                'abstract': False,
-            },
         ),
         migrations.CreateModel(
             name='Project',
@@ -129,8 +138,23 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='hub',
+            name='current_meeting',
+            field=models.ForeignKey(related_name='hubs', on_delete=django.db.models.deletion.SET_NULL, blank=True, to='openbadge.Meeting', null=True),
+        ),
+        migrations.AddField(
+            model_name='hub',
             name='project',
             field=models.ForeignKey(related_name='hubs', to='openbadge.Project', null=True),
+        ),
+        migrations.AddField(
+            model_name='history',
+            name='hub',
+            field=models.ForeignKey(related_name='histories', on_delete=django.db.models.deletion.SET_NULL, to='openbadge.Hub', null=True),
+        ),
+        migrations.AddField(
+            model_name='history',
+            name='meeting',
+            field=models.ForeignKey(related_name='histories', to='openbadge.Meeting', null=True),
         ),
         migrations.AddField(
             model_name='event',
@@ -141,5 +165,17 @@ class Migration(migrations.Migration):
             model_name='event',
             name='meeting',
             field=models.ForeignKey(related_name='events', to='openbadge.Meeting'),
+        ),
+        migrations.AlterUniqueTogether(
+            name='member',
+            unique_together=set([('badge', 'project')]),
+        ),
+        migrations.AlterIndexTogether(
+            name='history',
+            index_together=set([('meeting', 'hub')]),
+        ),
+        migrations.AlterIndexTogether(
+            name='event',
+            index_together=set([('log_index', 'hub', 'meeting')]),
         ),
     ]
