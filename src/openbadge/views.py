@@ -113,8 +113,10 @@ def post_meeting(request, project_key):
     except CurrentState.DoesNotExist:
         history = CurrentState(hub=hub, meeting=meeting) # type:CurrentState
 
-
-    events = simplejson.loads(request.data['events'])
+    if type(request.data) == type("hello :)"):  # string...
+        events = simplejson.loads(request.data['events'])
+    else:
+        events = request.data
     # events = [simplejson.loads(event) for event in events]  # this is a bit strange... the actual chunk data posted
                                                               # is a json array of json strings of objects. So we have to
                                                               # first load the array, then each string

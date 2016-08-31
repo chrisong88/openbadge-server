@@ -265,6 +265,7 @@ CORS_ALLOW_HEADERS = (
     'x-hub-uuid',
     'x-hub-name',
     'x-last-update',
+    'x-log-version',
     'x-project-name',
     'x-project-key',
     'x-meeting-uuid'

@@ -136,7 +136,8 @@ class Hub(BaseModel):
                 "last_log_updates": {current_state.meeting.uuid: current_state.last_log_index
                                      for current_state in self.current_states.all()
                 },
-                "su": self.su}
+                "su": self.su,
+                "name":self.name}
 
     def __unicode__(self):
         return self.name
